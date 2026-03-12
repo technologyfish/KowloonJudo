@@ -18,52 +18,26 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="20" class="mt-20">
-      <!-- 近7天报名趋势 -->
-      <el-col :span="16">
-        <el-card shadow="never" header="近7天报名趋势">
-          <div class="trend-chart">
-            <div
-              v-for="item in trend"
-              :key="item.date"
-              class="trend-bar-wrap"
-            >
-              <div class="trend-bar-bg">
-                <div
-                  class="trend-bar"
-                  :style="{ height: barHeight(item.count) + '%' }"
-                />
-              </div>
-              <div class="trend-count">{{ item.count }}</div>
-              <div class="trend-date">{{ item.date.slice(5) }}</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-
-      <!-- 年龄组分布 -->
-      <el-col :span="8">
-        <el-card shadow="never" header="年龄组报名分布">
-          <div v-if="ageDistribution.length">
-            <div
-              v-for="item in ageDistribution"
-              :key="item.age_group"
-              class="age-item"
-            >
-              <div class="age-label">{{ item.age_group }}</div>
-              <el-progress
-                :percentage="agePercent(item.count)"
-                :stroke-width="10"
-                :show-text="false"
-                color="#1677ff"
-              />
-              <div class="age-count">{{ item.count }}</div>
-            </div>
-          </div>
-          <el-empty v-else description="暂无报名数据" :image-size="60" />
-        </el-card>
-      </el-col>
-    </el-row>
+    <!-- 年龄组报名分布 -->
+    <el-card shadow="never" header="年龄组报名分布" class="mt-20">
+      <div v-if="ageDistribution.length">
+        <div
+          v-for="item in ageDistribution"
+          :key="item.age_group"
+          class="age-item"
+        >
+          <div class="age-label">{{ item.age_group }}</div>
+          <el-progress
+            :percentage="agePercent(item.count)"
+            :stroke-width="10"
+            :show-text="false"
+            color="#1677ff"
+          />
+          <div class="age-count">{{ item.count }}</div>
+        </div>
+      </div>
+      <el-empty v-else description="暂无报名数据" :image-size="60" />
+    </el-card>
 
     <!-- 最近报名记录 -->
     <el-card class="mt-20" shadow="never" header="最近报名记录">
@@ -104,7 +78,6 @@ import { getRegistrationList } from '@/api/competition'
 
 const loading = ref(false)
 const stats = ref<any>({})
-const trend = ref<{ date: string; count: number }[]>([])
 const ageDistribution = ref<{ age_group: string; count: number }[]>([])
 const recentRegs = ref<any[]>([])
 
@@ -139,11 +112,6 @@ const statCards = computed(() => [
   },
 ])
 
-const maxTrend = computed(() => Math.max(...trend.value.map(t => t.count), 1))
-function barHeight(count: number) {
-  return Math.round((count / maxTrend.value) * 100)
-}
-
 const totalAge = computed(() => ageDistribution.value.reduce((s, i) => s + i.count, 0) || 1)
 function agePercent(count: number) {
   return Math.round((count / totalAge.value) * 100)
@@ -161,7 +129,6 @@ async function fetchStats() {
   try {
     const res: any = await request.get('/admin/dashboard/stats')
     stats.value = res.data || {}
-    trend.value = res.data?.trend || []
     ageDistribution.value = res.data?.age_distribution || []
   } catch {
     ElMessage.error('获取统计数据失败')
@@ -208,42 +175,6 @@ onMounted(() => {
   justify-content: center;
   flex-shrink: 0;
 }
-
-/* 趋势图 */
-.trend-chart {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-  height: 160px;
-  padding: 0 8px;
-  gap: 6px;
-}
-.trend-bar-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  height: 100%;
-  gap: 4px;
-}
-.trend-bar-bg {
-  flex: 1;
-  width: 100%;
-  background: #f5f7fa;
-  border-radius: 4px;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-}
-.trend-bar {
-  width: 100%;
-  background: linear-gradient(180deg, #4096ff, #1677ff);
-  border-radius: 4px;
-  transition: height 0.4s ease;
-  min-height: 4px;
-}
-.trend-count { font-size: 12px; color: #666; font-weight: 600; }
-.trend-date { font-size: 11px; color: #bbb; }
 
 /* 年龄组分布 */
 .age-item {

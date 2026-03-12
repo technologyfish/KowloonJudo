@@ -86,7 +86,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="报名时间" width="200" :formatter="formatTime" />
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <div class="action-btns">
               <el-button

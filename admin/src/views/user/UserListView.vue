@@ -26,6 +26,7 @@
         v-loading="loading"
         stripe
         class="mt-16"
+        style="width: 100%"
         :header-cell-style="{ background: '#fafafa', color: '#666', fontWeight: '600' }"
       >
         <el-table-column prop="id" label="ID" width="70" align="center" />
@@ -37,18 +38,18 @@
           </template>
         </el-table-column>
         <el-table-column prop="nickname" label="昵称" width="120" />
-        <el-table-column prop="phone" label="手机号" width="140" />
+        <el-table-column prop="phone" label="手机号" min-width="140" />
         <el-table-column label="性别" width="80" align="center">
           <template #default="{ row }">
             {{ genderLabel(row.gender) }}
           </template>
         </el-table-column>
-        <el-table-column label="出生日期" width="130">
+        <el-table-column label="出生日期" min-width="130">
           <template #default="{ row }">
             {{ row.birthday || '—' }}
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="注册时间" width="200" :formatter="formatTime" />
+        <el-table-column prop="created_at" label="注册时间" min-width="180" :formatter="formatTime" />
         <el-table-column label="状态" width="90" align="center">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
@@ -77,6 +78,48 @@
         />
       </div>
     </el-card>
+
+    <!-- 编辑用户弹窗 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      :title="`编辑用户：${editForm.nickname || ''}`"
+      width="500px"
+      destroy-on-close
+    >
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="昵称">
+          <el-input v-model="editForm.nickname" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="editForm.phone" />
+        </el-form-item>
+        <el-form-item label="性别">
+          <el-select v-model="editForm.gender" placeholder="请选择" style="width: 100%">
+            <el-option label="男" :value="1" />
+            <el-option label="女" :value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="出生日期">
+          <el-date-picker
+            v-model="editForm.birthday"
+            type="date"
+            value-format="YYYY-MM-DD"
+            placeholder="选择日期"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="editForm.status" style="width: 100%">
+            <el-option label="正常" :value="1" />
+            <el-option label="禁用" :value="0" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="editLoading" @click="submitEdit">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -84,7 +127,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, User } from '@element-plus/icons-vue'
-import { getUserList, deleteUser } from '@/api/user'
+import { getUserList, updateUser, deleteUser } from '@/api/user'
 
 // ── 性别显示 ──────────────────────────────────────
 function genderLabel(val: any): string {
@@ -127,8 +170,46 @@ function resetQuery() {
   fetchList()
 }
 
+// ── 编辑用户 ──────────────────────────────────────
+const editDialogVisible = ref(false)
+const editLoading = ref(false)
+const editForm = reactive({
+  id: 0,
+  nickname: '',
+  phone: '',
+  gender: null as number | null,
+  birthday: '',
+  status: 1,
+})
+
 function handleEdit(row: any) {
-  ElMessage.info(`编辑用户：${row.nickname || row.id}`)
+  editForm.id = row.id
+  editForm.nickname = row.nickname || ''
+  editForm.phone = row.phone || ''
+  editForm.gender = row.gender != null ? Number(row.gender) : null
+  editForm.birthday = row.birthday || ''
+  editForm.status = row.status ?? 1
+  editDialogVisible.value = true
+}
+
+async function submitEdit() {
+  editLoading.value = true
+  try {
+    await updateUser(editForm.id, {
+      nickname: editForm.nickname,
+      phone: editForm.phone,
+      gender: editForm.gender,
+      birthday: editForm.birthday || null,
+      status: editForm.status,
+    })
+    ElMessage.success('保存成功')
+    editDialogVisible.value = false
+    fetchList()
+  } catch {
+    // 拦截器统一处理
+  } finally {
+    editLoading.value = false
+  }
 }
 
 async function handleDelete(row: any) {

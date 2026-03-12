@@ -53,9 +53,11 @@ class UserManageController extends Controller
             'nickname' => 'sometimes|string|max:50',
             'phone'    => 'sometimes|string|max:20',
             'status'   => 'sometimes|in:0,1',
+            'gender'   => 'sometimes|integer|in:0,1,2',
+            'birthday' => 'sometimes|nullable|date_format:Y-m-d',
         ]);
 
-        $user->update($request->only(['nickname', 'phone', 'status', 'avatar']));
+        $user->update($request->only(['nickname', 'phone', 'status', 'avatar', 'gender', 'birthday']));
 
         return $this->success($user, '更新成功');
     }

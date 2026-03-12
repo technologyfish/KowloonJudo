@@ -391,7 +391,7 @@ function statusClass(s) {
 
 /* ══ 顶部背景图 ══ */
 .header {
-  background: url('/static/icons/header.jpg') center/cover no-repeat;
+  background: url('https://copade.net.cn/header.jpg') center/cover no-repeat;
   padding-bottom: 40rpx;
 }
 
