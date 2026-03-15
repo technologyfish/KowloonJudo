@@ -35,9 +35,28 @@ class UploadController extends Controller
 
         $file = $request->file('file');
 
-        // 校验 MIME
+        // 校验 MIME（兼容未开启 fileinfo 扩展的环境）
+        $mime = null;
+        try {
+            $mime = $file->getMimeType();
+        } catch (\Throwable $e) {
+            // fileinfo 扩展未启用，通过文件扩展名推断
+        }
+
+        if (!$mime) {
+            $extMimeMap = [
+                'jpg'  => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png'  => 'image/png',
+                'gif'  => 'image/gif',
+                'webp' => 'image/webp',
+            ];
+            $ext  = strtolower($file->getClientOriginalExtension() ?: '');
+            $mime = $extMimeMap[$ext] ?? 'application/octet-stream';
+        }
+
         $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!in_array($file->getMimeType(), $allowedMimes)) {
+        if (!in_array($mime, $allowedMimes)) {
             return $this->error('仅支持 jpg/png/gif/webp 格式', 422);
         }
 
@@ -57,7 +76,7 @@ class UploadController extends Controller
         $savePath = $dir . DIRECTORY_SEPARATOR . $filename;
 
         // 压缩 & 转为 JPEG（GD 库）
-        if ($this->compressImage($file->getRealPath(), $savePath, $file->getMimeType())) {
+        if ($this->compressImage($file->getRealPath(), $savePath, $mime)) {
             // 压缩成功
         } else {
             // GD 失败时回退到原文件

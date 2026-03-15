@@ -104,7 +104,8 @@ import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import { get, post } from '@/utils/request'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+// const BASE_URL = 'https://copade.net.cn/api'
+const BASE_URL =  'http://localhost:8000/api'
 const userStore = useUserStore()
 
 // ── 每次进入页面从后端刷新用户信息（确保 gender/birthday 等字段不丢失）──

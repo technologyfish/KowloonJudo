@@ -175,7 +175,7 @@ class CompetitionRuleController extends Controller
                     '体重(道服)','道服无差','体重(无道服)','无道服无差','战队','手机号','邮箱',
                     '套餐','金额','支付状态','审核状态','报名时间'];
 
-        $payStatusMap     = ['pending' => '待支付', 'paid' => '已支付', 'cancelled' => '已取消', 'refunded' => '已退款'];
+        $payStatusMap     = ['pending' => '待支付', 'paid' => '已支付', 'cancelled' => '已取消', 'refund_pending' => '申请退款中', 'refunded' => '已退款'];
         $confirmStatusMap = ['pending' => '未通过', 'confirmed' => '已通过'];
 
         $rows = $regs->map(fn($r) => [
@@ -267,8 +267,8 @@ class CompetitionRuleController extends Controller
     {
         $reg = Registration::findOrFail($id);
 
-        if ($reg->pay_status !== 'paid') {
-            return $this->error('只有已支付的订单才能退款', 422);
+        if (!in_array($reg->pay_status, ['paid', 'refund_pending'], true)) {
+            return $this->error('只有已支付或申请退款中的订单才能退款', 422);
         }
 
         // 调用微信退款 API
@@ -324,7 +324,7 @@ class CompetitionRuleController extends Controller
             'team'         => 'sometimes|string|max:100',
             'phone'        => 'sometimes|string|max:20',
             'email'        => 'sometimes|email|max:100',
-            'pay_status'   => 'sometimes|string|in:pending,paid,cancelled,refunded',
+            'pay_status'   => 'sometimes|string|in:pending,paid,cancelled,refund_pending,refunded',
             'confirm_status' => 'sometimes|string|in:pending,confirmed',
         ]);
 
@@ -364,8 +364,8 @@ class CompetitionRuleController extends Controller
         $reg = Registration::findOrFail($id);
 
         // 已支付的订单不允许直接删除，需先退款
-        if ($reg->pay_status === 'paid') {
-            return $this->error('已支付的订单请先退款再删除', 422);
+        if (in_array($reg->pay_status, ['paid', 'refund_pending'], true)) {
+            return $this->error('已支付或退款中的订单请先退款再删除', 422);
         }
 
         $reg->delete();

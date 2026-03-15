@@ -50,9 +50,11 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt'], function () use ($rou
     // 报名 & 支付
     $router->post('/competition/register',           'CompetitionController@register');
     $router->post('/competition/pay/create',         'CompetitionController@createPayOrder');
-    $router->get('/competition/pay/query/{orderId}', 'CompetitionController@queryPayResult');
+    $router->get('/competition/pay/query',            'CompetitionController@queryPayResult');
     $router->post('/competition/cancel',             'CompetitionController@cancelOrder');
+    $router->post('/competition/refund',             'CompetitionController@requestRefund');
     $router->get('/competition/orders',              'CompetitionController@myOrders');
+    $router->get('/competition/order-detail',        'CompetitionController@orderDetail');
 });
 
 /*

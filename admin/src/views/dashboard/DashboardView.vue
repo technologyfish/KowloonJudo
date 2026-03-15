@@ -118,10 +118,10 @@ function agePercent(count: number) {
 }
 
 function statusLabel(s: string) {
-  return { pending: '待支付', paid: '已支付', cancelled: '已取消' }[s] || s
+  return { pending: '待支付', paid: '已支付', cancelled: '已取消', refund_pending: '退款中', refunded: '已退款' }[s] || s
 }
 function statusType(s: string): any {
-  return { pending: 'warning', paid: 'success', cancelled: 'info' }[s] || ''
+  return { pending: 'warning', paid: 'success', cancelled: 'info', refund_pending: 'warning', refunded: 'info' }[s] || ''
 }
 
 async function fetchStats() {

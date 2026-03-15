@@ -1,6 +1,6 @@
 <template>
   <div class="reg-page">
-    <el-card>
+    <el-card  shadow="never">
       <!-- 搜索工具栏 -->
       <div class="toolbar">
         <div class="toolbar-left">
@@ -12,10 +12,11 @@
             style="width:220px"
             @keyup.enter="fetchList"
           />
-          <el-select v-model="query.pay_status" placeholder="支付状态" clearable style="width:120px">
+          <el-select v-model="query.pay_status" placeholder="支付状态" clearable style="width:140px">
             <el-option label="待支付" value="pending" />
             <el-option label="已支付" value="paid" />
             <el-option label="已取消" value="cancelled" />
+            <el-option label="退款中" value="refund_pending" />
             <el-option label="已退款" value="refunded" />
           </el-select>
           <el-select v-model="query.confirm_status" placeholder="审核状态" clearable style="width:120px">
@@ -30,7 +31,7 @@
         <div class="toolbar-right">
           <el-dropdown @command="handleExportCommand">
             <el-button :icon="Download">
-              导出 CSV <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              导出 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -52,16 +53,6 @@
       >
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="order_no" label="订单号" width="140" />
-        <el-table-column prop="name_cn" label="姓名（汉字）" width="110" />
-        <el-table-column prop="name_pinyin" label="姓名（拼音）" width="130" />
-        <el-table-column prop="gender" label="性别" width="70" />
-        <el-table-column prop="birthday" label="出生日期" width="110" />
-        <el-table-column prop="age_group" label="年龄组" width="110" />
-        <el-table-column prop="belt_color" label="带色" width="80" />
-        <el-table-column prop="weight_gi" label="体重（道服）" width="120" />
-        <el-table-column prop="weight_nogi" label="体重（无道服）" width="130" />
-        <el-table-column prop="team" label="战队" width="120" />
-        <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column prop="package_label" label="套餐" width="160" />
         <el-table-column prop="amount" label="金额" width="80">
           <template #default="{ row }">
@@ -85,8 +76,19 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="name_cn" label="姓名（汉字）" width="110" />
+        <el-table-column prop="name_pinyin" label="姓名（拼音）" width="130" />
+        <el-table-column prop="gender" label="性别" width="70" />
+        <el-table-column prop="birthday" label="出生日期" width="110" />
+        <el-table-column prop="age_group" label="年龄组" width="110" />
+        <el-table-column prop="belt_color" label="带色" width="80" />
+        <el-table-column prop="weight_gi" label="体重（道服）" width="120" />
+        <el-table-column prop="weight_nogi" label="体重（无道服）" width="130" />
+        <el-table-column prop="team" label="战队" width="120" />
+        <el-table-column prop="phone" label="手机号" width="130" />
+
         <el-table-column prop="created_at" label="报名时间" width="200" :formatter="formatTime" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right" align="center">
           <template #default="{ row }">
             <div class="action-btns">
               <el-button
@@ -124,7 +126,7 @@
                 取消通过
               </el-button>
               <el-button
-                v-if="row.pay_status === 'paid'"
+                v-if="row.pay_status === 'paid' || row.pay_status === 'refund_pending'"
                 type="warning"
                 size="small"
                 plain
@@ -154,19 +156,6 @@
     <el-dialog v-model="auditDialogVisible" title="审核报名信息" width="650px" destroy-on-close>
       <el-descriptions :column="2" border size="default">
         <el-descriptions-item label="订单号">{{ auditRow.order_no }}</el-descriptions-item>
-        <el-descriptions-item label="姓名（汉字）">{{ auditRow.name_cn }}</el-descriptions-item>
-        <el-descriptions-item label="姓名（拼音）">{{ auditRow.name_pinyin }}</el-descriptions-item>
-        <el-descriptions-item label="性别">{{ auditRow.gender }}</el-descriptions-item>
-        <el-descriptions-item label="出生日期">{{ auditRow.birthday }}</el-descriptions-item>
-        <el-descriptions-item label="手机号">{{ auditRow.phone }}</el-descriptions-item>
-        <el-descriptions-item label="邮箱">{{ auditRow.email }}</el-descriptions-item>
-        <el-descriptions-item label="身份证">{{ auditRow.id_card }}</el-descriptions-item>
-        <el-descriptions-item label="国籍">{{ auditRow.nationality }}</el-descriptions-item>
-        <el-descriptions-item label="年龄组别">{{ auditRow.age_group }}</el-descriptions-item>
-        <el-descriptions-item label="带色">{{ auditRow.belt_color }}</el-descriptions-item>
-        <el-descriptions-item label="体重（道服）">{{ auditRow.weight_gi || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="体重（无道服）">{{ auditRow.weight_nogi || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="战队">{{ auditRow.team }}</el-descriptions-item>
         <el-descriptions-item label="套餐">{{ auditRow.package_label }}</el-descriptions-item>
         <el-descriptions-item label="金额">
           <span style="color:#e74c3c;font-weight:bold">¥{{ auditRow.amount }}</span>
@@ -181,6 +170,21 @@
             {{ auditRow.confirm_status === 'confirmed' ? '已通过' : '未通过' }}
           </el-tag>
         </el-descriptions-item>
+        <el-descriptions-item label="姓名（汉字）">{{ auditRow.name_cn }}</el-descriptions-item>
+        <el-descriptions-item label="姓名（拼音）">{{ auditRow.name_pinyin }}</el-descriptions-item>
+        <el-descriptions-item label="性别">{{ auditRow.gender }}</el-descriptions-item>
+        <el-descriptions-item label="出生日期">{{ auditRow.birthday }}</el-descriptions-item>
+        <el-descriptions-item label="手机号">{{ auditRow.phone }}</el-descriptions-item>
+        <el-descriptions-item label="邮箱">{{ auditRow.email }}</el-descriptions-item>
+        <el-descriptions-item label="身份证">{{ auditRow.id_card }}</el-descriptions-item>
+        <el-descriptions-item label="国籍">{{ auditRow.nationality }}</el-descriptions-item>
+        <el-descriptions-item label="年龄组别">{{ auditRow.age_group }}</el-descriptions-item>
+        <el-descriptions-item label="带色">{{ auditRow.belt_color }}</el-descriptions-item>
+        <el-descriptions-item label="体重（道服）">{{ auditRow.weight_gi || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="体重（无道服）">{{ auditRow.weight_nogi || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="战队">{{ auditRow.team }}</el-descriptions-item>
+
+
       </el-descriptions>
       <template #footer>
         <el-button @click="auditDialogVisible = false">关闭</el-button>
@@ -286,6 +290,7 @@
                 <el-option label="待支付" value="pending" />
                 <el-option label="已支付" value="paid" />
                 <el-option label="已取消" value="cancelled" />
+                <el-option label="退款中" value="refund_pending" />
                 <el-option label="已退款" value="refunded" />
               </el-select>
             </el-form-item>
@@ -436,10 +441,10 @@ onMounted(fetchList)
 
 // ── 状态 ─────────────────────────────────────────
 function payStatusLabel(s: string) {
-  return { pending: '待支付', paid: '已支付', cancelled: '已取消', refunded: '已退款' }[s] || s
+  return { pending: '待支付', paid: '已支付', cancelled: '已取消', refund_pending: '退款中', refunded: '已退款' }[s] || s
 }
 function payStatusType(s: string) {
-  return { pending: 'warning', paid: 'success', cancelled: 'info', refunded: 'danger' }[s] || ''
+  return { pending: 'warning', paid: 'success', cancelled: 'info', refund_pending: 'danger', refunded: 'danger' }[s] || ''
 }
 
 // ── 审核（人工通过）─────────────────────────────────
@@ -611,5 +616,5 @@ async function handleExportCommand(command: string) {
 .toolbar-right { display: flex; gap: 10px; align-items: center; }
 .mt-16 { margin-top: 16px; }
 .pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
-.action-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+.action-btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
 </style>

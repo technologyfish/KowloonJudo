@@ -13,10 +13,16 @@ export const submitRegistration = (data) => post('/competition/register', data)
 export const createPayOrder = (data) => post('/competition/pay/create', data)
 
 /** 查询支付结果 */
-export const queryPayResult = (orderId) => get(`/competition/pay/query/${orderId}`)
+export const queryPayResult = (orderId) => get('/competition/pay/query', { order_id: orderId })
 
 /** 取消订单（仅待支付） */
 export const cancelOrder = (data) => post('/competition/cancel', data)
 
+/** 申请退款（仅已支付） */
+export const requestRefund = (data) => post('/competition/refund', data)
+
 /** 获取我的订单列表（支持状态筛选 + 分页） */
 export const getMyOrders = (params = {}) => get('/competition/orders', params)
+
+/** 获取单个订单详情 */
+export const getOrderDetail = (id) => get('/competition/order-detail', { id })

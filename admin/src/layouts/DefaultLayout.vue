@@ -1,112 +1,119 @@
 <template>
-  <el-container class="layout-root">
+  <div class="layout-wrapper">
+    <!-- 上部：侧边栏 + 右侧主区域 -->
+    <el-container class="layout-root">
 
-    <!-- ── 侧边栏 ── -->
-    <el-aside width="220px" class="layout-aside">
-      <!-- Logo -->
-      <div class="aside-logo">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="flex-shrink:0">
-          <rect width="28" height="28" rx="7" fill="#1677ff"/>
-          <path d="M14 5C9.029 5 5 9.029 5 14C5 18.971 9.029 23 14 23C18.971 23 23 18.971 23 14C23 9.029 18.971 5 14 5Z" stroke="white" stroke-width="1.8"/>
-          <path d="M9.5 14L12.5 17L18.5 10.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="logo-text">KowloonJudo</span>
-      </div>
-
-      <!-- 导航菜单 -->
-      <el-menu
-        :default-active="activeMenu"
-        router
-        class="side-menu"
-        :collapse="false"
-      >
-        <el-menu-item index="/dashboard">
-          <el-icon><Odometer /></el-icon>
-          <span>控制台</span>
-        </el-menu-item>
-
-        <div class="menu-group-label">比赛管理</div>
-
-        <el-menu-item index="/competition/rules">
-          <el-icon><Document /></el-icon>
-          <span>比赛规则</span>
-        </el-menu-item>
-
-        <el-menu-item index="/competition/registrations">
-          <el-icon><List /></el-icon>
-          <span>报名记录</span>
-        </el-menu-item>
-
-        <el-menu-item index="/competition/fee-settings">
-          <el-icon><Money /></el-icon>
-          <span>费用设置</span>
-        </el-menu-item>
-
-        <el-menu-item index="/announcements">
-          <el-icon><Bell /></el-icon>
-          <span>公告管理</span>
-        </el-menu-item>
-
-        <div class="menu-group-label">系统管理</div>
-
-        <el-menu-item index="/users">
-          <el-icon><User /></el-icon>
-          <span>用户管理</span>
-        </el-menu-item>
-      </el-menu>
-    </el-aside>
-
-    <!-- ── 右侧主区域 ── -->
-    <el-container class="layout-right">
-
-      <!-- 顶部 Header -->
-      <el-header class="layout-header">
-        <div class="header-left">
-          <!-- 面包屑 -->
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/dashboard' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item v-if="currentTitle">{{ currentTitle }}</el-breadcrumb-item>
-          </el-breadcrumb>
+      <!-- ── 侧边栏 ── -->
+      <el-aside width="220px" class="layout-aside">
+        <!-- Logo -->
+        <div class="aside-logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="flex-shrink:0">
+            <rect width="28" height="28" rx="7" fill="#1677ff"/>
+            <path d="M14 5C9.029 5 5 9.029 5 14C5 18.971 9.029 23 14 23C18.971 23 23 18.971 23 14C23 9.029 18.971 5 14 5Z" stroke="white" stroke-width="1.8"/>
+            <path d="M9.5 14L12.5 17L18.5 10.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="logo-text">KowloonJudo</span>
         </div>
 
-        <div class="header-right">
-          <span class="env-badge">开发环境</span>
+        <!-- 导航菜单 -->
+        <el-menu
+          :default-active="activeMenu"
+          router
+          class="side-menu"
+          :collapse="false"
+        >
+          <el-menu-item index="/dashboard">
+            <el-icon><Odometer /></el-icon>
+            <span>控制台</span>
+          </el-menu-item>
 
-          <el-divider direction="vertical" style="margin: 0 12px" />
+          <div class="menu-group-label">比赛管理</div>
 
-          <el-dropdown @command="handleCommand" trigger="click">
-            <div class="user-trigger">
-              <el-avatar :size="30" style="background:#1677ff;flex-shrink:0">
-                <el-icon size="16"><UserFilled /></el-icon>
-              </el-avatar>
-              <span class="username">{{ authStore.userInfo?.name || '管理员' }}</span>
-              <el-icon size="12" style="color:#aaa"><ArrowDown /></el-icon>
-            </div>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item disabled>
-                  <span style="font-size:12px;color:#999">{{ authStore.userInfo?.email }}</span>
-                </el-dropdown-item>
-                <el-dropdown-item divided command="logout" style="color:#f56c6c">
-                  退出登录
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-      </el-header>
+          <el-menu-item index="/competition/rules">
+            <el-icon><Document /></el-icon>
+            <span>比赛规则</span>
+          </el-menu-item>
 
-      <!-- 内容区 -->
-      <el-main class="layout-main">
-        <!-- 页面标题栏 -->
-        <div v-if="currentTitle" class="page-header">
-          <span class="page-header-title">{{ currentTitle }}</span>
-        </div>
+          <el-menu-item index="/competition/registrations">
+            <el-icon><List /></el-icon>
+            <span>报名记录</span>
+          </el-menu-item>
 
-        <router-view />
-      </el-main>
+          <el-menu-item index="/competition/fee-settings">
+            <el-icon><Money /></el-icon>
+            <span>费用设置</span>
+          </el-menu-item>
+
+          <el-menu-item index="/announcements">
+            <el-icon><Bell /></el-icon>
+            <span>公告管理</span>
+          </el-menu-item>
+
+          <div class="menu-group-label">系统管理</div>
+
+          <el-menu-item index="/users">
+            <el-icon><User /></el-icon>
+            <span>用户管理</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
+
+      <!-- ── 右侧主区域 ── -->
+      <el-container class="layout-right">
+
+        <!-- 顶部 Header -->
+        <el-header class="layout-header">
+          <div class="header-left">
+            <!-- 面包屑 -->
+            <el-breadcrumb separator="/">
+              <el-breadcrumb-item :to="{ path: '/dashboard' }">首页</el-breadcrumb-item>
+              <el-breadcrumb-item v-if="currentTitle">{{ currentTitle }}</el-breadcrumb-item>
+            </el-breadcrumb>
+          </div>
+
+          <div class="header-right">
+            <el-divider direction="vertical" style="margin: 0 12px" />
+
+            <el-dropdown @command="handleCommand" trigger="click">
+              <div class="user-trigger">
+                <el-avatar :size="30" style="background:#1677ff;flex-shrink:0">
+                  <el-icon size="16"><UserFilled /></el-icon>
+                </el-avatar>
+                <span class="username">{{ authStore.userInfo?.name || '管理员' }}</span>
+                <el-icon size="12" style="color:#aaa"><ArrowDown /></el-icon>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item disabled>
+                    <span style="font-size:12px;color:#999">{{ authStore.userInfo?.email }}</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item divided command="logout" style="color:#f56c6c">
+                    退出登录
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </el-header>
+
+        <!-- 内容区 -->
+        <el-main class="layout-main">
+          <!-- 页面标题栏 -->
+          <div v-if="currentTitle" class="page-header">
+            <span class="page-header-title">{{ currentTitle }}</span>
+          </div>
+
+          <router-view />
+        </el-main>
+      </el-container>
     </el-container>
-  </el-container>
+
+    <!-- 公共底部备案信息（全宽，文档流） -->
+    <div class="global-footer">
+      <span>备案号：</span>
+      <a href="http://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">桂ICP备2026003766号-1</a>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -142,8 +149,19 @@ async function handleCommand(command: string) {
 </script>
 
 <style scoped>
-/* ── 根容器 ── */
-.layout-root { height: 100vh; overflow: hidden; }
+/* ── 最外层包裹：纵向 flex，撑满视口 ── */
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── 根容器（侧边栏 + 右侧）占满剩余高度 ── */
+.layout-root {
+  flex: 1;
+  overflow: hidden;
+}
 
 /* ── 侧边栏 ── */
 .layout-aside {
@@ -152,7 +170,6 @@ async function handleCommand(command: string) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: 100vh;
 }
 
 .aside-logo {
@@ -269,4 +286,24 @@ async function handleCommand(command: string) {
 :deep(.el-breadcrumb__inner) { color: #999; font-size: 13px; }
 :deep(.el-breadcrumb__inner a) { color: #666; }
 :deep(.el-breadcrumb__inner.is-link:hover) { color: #1677ff; }
+
+/* ── 公共底部备案信息（全宽横跨） ── */
+.global-footer {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 15px 0;
+  font-size: 12px;
+  color: #bbb;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+}
+.global-footer a {
+  color: #bbb;
+  text-decoration: none;
+  transition: color .2s;
+}
+.global-footer a:hover {
+  color: #1677ff;
+  text-decoration: underline;
+}
 </style>

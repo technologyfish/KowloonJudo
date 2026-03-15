@@ -245,12 +245,13 @@ class CompetitionController extends Controller
 
     /**
      * 查询支付结果（前端支付后主动查询，防回调丢失）
-     * GET /api/competition/pay/query/{orderId}
+     * GET /api/competition/pay/query?order_id=xxx
      */
-    public function queryPayResult($orderId)
+    public function queryPayResult(Request $request)
     {
-        $user = JWTAuth::parseToken()->authenticate();
-        $reg  = Registration::where('id', $orderId)
+        $user    = JWTAuth::parseToken()->authenticate();
+        $orderId = $request->input('order_id');
+        $reg     = Registration::where('id', $orderId)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
@@ -378,6 +379,67 @@ class CompetitionController extends Controller
     }
 
     /**
+     * 用户申请退款（仅已支付订单可申请）
+     * POST /api/competition/refund
+     */
+    public function requestRefund(Request $request)
+    {
+        $this->validate($request, [
+            'order_id' => 'required|integer',
+        ]);
+
+        $user = JWTAuth::parseToken()->authenticate();
+        $reg  = Registration::where('id', $request->input('order_id'))
+            ->where('user_id', $user->id)
+            ->where('pay_status', 'paid')
+            ->firstOrFail();
+
+        $reg->update(['pay_status' => 'refund_pending']);
+
+        Log::info('用户申请退款', ['order_id' => $reg->id, 'user_id' => $user->id]);
+
+        return $this->success(null, '退款申请已提交，请等待处理');
+    }
+
+    /**
+     * 获取单个订单详情
+     * GET /api/competition/order-detail?id=xxx
+     */
+    public function orderDetail(Request $request)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+        $id   = $request->input('id');
+        $r    = Registration::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        return $this->success([
+            'id'            => $r->id,
+            'order_no'      => $r->order_no,
+            'name_pinyin'   => $r->name_pinyin,
+            'name_cn'       => $r->name_cn,
+            'gender'        => $r->gender_text,
+            'birthday'      => $r->birthday ? $r->birthday->format('Y-m-d') : null,
+            'nationality'   => $r->nationality,
+            'id_card'       => $r->id_card,
+            'age_group'     => $r->age_group,
+            'belt_color'    => $r->belt_color,
+            'weight_gi'     => $r->weight_gi,
+            'weight_nogi'   => $r->weight_nogi,
+            'gi_open'       => $r->gi_open,
+            'nogi_open'     => $r->nogi_open,
+            'team'          => $r->team,
+            'phone'         => $r->phone,
+            'email'         => $r->email,
+            'package_label' => $r->package_label,
+            'amount'        => $r->amount,
+            'pay_status'    => $r->pay_status,
+            'paid_at'       => $r->paid_at ? $r->paid_at->format('Y-m-d H:i:s') : null,
+            'created_at'    => $r->created_at?->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
      * 获取当前用户订单列表（支持状态筛选 + 分页）
      * GET /api/competition/orders?status=pending&page=1&per_page=10
      */
@@ -391,7 +453,10 @@ class CompetitionController extends Controller
         $query = Registration::where('user_id', $user->id)
             ->orderByDesc('created_at');
 
-        if ($status !== 'all') {
+        if ($status === 'after_sale') {
+            // 售后 tab：申请退款中 + 已退款
+            $query->whereIn('pay_status', ['refund_pending', 'refunded']);
+        } elseif ($status !== 'all') {
             $query->where('pay_status', $status);
         }
 
@@ -416,6 +481,7 @@ class CompetitionController extends Controller
                     'package_label' => $r->package_label,
                     'amount'        => $r->amount,
                     'pay_status'    => $r->pay_status,
+                    'paid_at'       => $r->paid_at ? $r->paid_at->format('Y-m-d H:i') : null,
                     'created_at'    => $r->created_at?->format('Y-m-d H:i'),
                 ];
             });

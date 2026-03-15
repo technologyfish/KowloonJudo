@@ -53,6 +53,9 @@
       </el-form>
 
       <p class="login-footer">© 2025 KowloonJudo · All rights reserved</p>
+      <p class="login-beian">
+        备案号：<a href="http://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">桂ICP备2026003766号-1</a>
+      </p>
     </div>
   </div>
 </template>
@@ -147,6 +150,22 @@ async function handleLogin() {
   margin-top: 28px;
   font-size: 12px;
   color: #ccc;
+  margin-bottom: 0;
+}
+
+.login-beian {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #ccc;
+}
+.login-beian a {
+  color: #ccc;
+  text-decoration: none;
+  transition: color .2s;
+}
+.login-beian a:hover {
+  color: #1677ff;
+  text-decoration: underline;
 }
 
 :deep(.el-input__wrapper) {

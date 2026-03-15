@@ -85,57 +85,23 @@
       </view>
 
       <view v-else class="order-list">
-        <view v-for="order in orders" :key="order.id" class="order-card">
-          <!-- 订单头 -->
+        <view v-for="order in orders" :key="order.id" class="order-card" @click="goOrderDetail(order)">
+          <!-- 第一行：订单号 + 状态 -->
           <view class="order-header">
-            <text class="order-no">订单 {{ order.order_no || order.id }}</text>
+            <text class="order-no">订单号: {{ order.order_no || order.id }}</text>
             <text class="order-status" :class="statusClass(order.pay_status)">
               {{ statusLabel(order.pay_status) }}
             </text>
           </view>
-
-          <!-- 订单信息 -->
-          <view class="order-body">
-            <view class="info-row">
-              <text class="info-key">姓名</text>
-              <text class="info-val">{{ order.name_cn || order.name_pinyin }}</text>
-            </view>
-            <view class="info-row">
-              <text class="info-key">年龄组 / 性别</text>
-              <text class="info-val">{{ order.age_group }} / {{ order.gender }}</text>
-            </view>
-            <view class="info-row">
-              <text class="info-key">带色</text>
-              <text class="info-val">{{ order.belt_color }}</text>
-            </view>
-            <view v-if="order.weight_gi" class="info-row">
-              <text class="info-key">体重（道服）</text>
-              <text class="info-val">{{ order.weight_gi }}</text>
-            </view>
-            <view v-if="order.weight_nogi" class="info-row">
-              <text class="info-key">体重（无道服）</text>
-              <text class="info-val">{{ order.weight_nogi }}</text>
-            </view>
-            <view class="info-row">
-              <text class="info-key">战队</text>
-              <text class="info-val">{{ order.team }}</text>
-            </view>
-            <view class="info-row">
-              <text class="info-key">套餐</text>
-              <text class="info-val">{{ order.package_label }}</text>
-            </view>
+          <!-- 第二行：下单时间 -->
+          <view class="order-row">
+            <text class="order-label">下单时间</text>
+            <text class="order-val">{{ order.created_at }}</text>
           </view>
-
-          <!-- 订单底部：支付金额 -->
-          <view class="order-footer">
-            <text class="order-amount-label">支付金额</text>
+          <!-- 第三行：订单金额 -->
+          <view class="order-row">
+            <text class="order-label">订单金额</text>
             <text class="order-price">¥{{ order.amount }}</text>
-          </view>
-
-          <!-- 待支付操作按钮（右对齐） -->
-          <view v-if="order.pay_status === 'pending'" class="repay-wrap">
-            <button class="cancel-btn" @click="handleCancel(order)">取消订单</button>
-            <button class="repay-btn" @click="goRepay(order)">继续支付</button>
           </view>
         </view>
       </view>
@@ -158,10 +124,9 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
-import { get, post } from '@/utils/request'
-import { getMyOrders, createPayOrder, queryPayResult, cancelOrder } from '@/api/competition'
+import { get, post, BASE_URL } from '@/utils/request'
+import { getMyOrders } from '@/api/competition'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
 const userStore       = useUserStore()
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 20)
@@ -183,11 +148,11 @@ const avatarSrc = computed(() => {
 // ── 订单相关 ─────────────────────────────────────────────────
 const PER_PAGE = 10
 const orderTabs = [
-  { key: 'all',       label: '全部' },
-  { key: 'pending',   label: '待付款' },
-  { key: 'paid',      label: '已支付' },
-  { key: 'cancelled', label: '已取消' },
-  { key: 'refunded',  label: '已退款' },
+  { key: 'all',        label: '全部' },
+  { key: 'pending',    label: '待付款' },
+  { key: 'paid',       label: '已支付' },
+  { key: 'cancelled',  label: '已取消' },
+  { key: 'after_sale', label: '售后' },
 ]
 const currentTab   = ref('all')
 const orders       = ref([])
@@ -268,54 +233,9 @@ function loadMore() {
   fetchOrders(false)
 }
 
-// ── 继续支付 ─────────────────────────────────────────────────
-async function goRepay(order) {
-  try {
-    const payRes = await createPayOrder({
-      order_id: order.id,
-    })
-    const payParams = payRes.data
-
-    await new Promise((resolve, reject) => {
-      uni.requestPayment({
-        provider: 'wxpay',
-        timeStamp: payParams.timeStamp,
-        nonceStr: payParams.nonceStr,
-        package: payParams.package,
-        signType: payParams.signType,
-        paySign: payParams.paySign,
-        success: resolve,
-        fail: reject,
-      })
-    })
-
-    await queryPayResult(order.id)
-    uni.showToast({ title: '支付成功！', icon: 'success' })
-    setTimeout(() => fetchOrders(true), 1500)
-
-  } catch (e) {
-    if (e?.errMsg === 'requestPayment:fail cancel') {
-      uni.showToast({ title: '已取消支付', icon: 'none' })
-    }
-  }
-}
-
-// ── 取消订单 ────────────────────────────────────────────────
-function handleCancel(order) {
-  uni.showModal({
-    title: '提示',
-    content: '确定要取消该订单吗？',
-    success: async (res) => {
-      if (!res.confirm) return
-      try {
-        await cancelOrder({ order_id: order.id })
-        uni.showToast({ title: '订单已取消', icon: 'success' })
-        setTimeout(() => fetchOrders(true), 800)
-      } catch (e) {
-        uni.showToast({ title: e?.message || '取消失败', icon: 'none' })
-      }
-    }
-  })
+// ── 跳转订单详情 ────────────────────────────────────────────
+function goOrderDetail(order) {
+  uni.navigateTo({ url: `/pages/user/order-detail?id=${order.id}` })
 }
 
 // ── 换头像 ──────────────────────────────────────────────────
@@ -339,14 +259,19 @@ async function onChooseAvatar(e) {
 
 function uploadAvatarFile(filePath) {
   return new Promise((resolve, reject) => {
+    const userToken = userStore.token
     uni.uploadFile({
       url: BASE_URL + '/upload/avatar',
       filePath,
       name: 'file',
       header: {
-        Authorization: userStore.token ? `Bearer ${userStore.token}` : '',
+        Authorization: userToken ? `Bearer ${userToken}` : '',
       },
       success(res) {
+        if (res.statusCode !== 200) {
+          reject(new Error(`上传失败(${res.statusCode})`))
+          return
+        }
         try {
           const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
           if (data?.data?.url) {
@@ -375,10 +300,10 @@ function goHome() {
 
 // ── 辅助 ────────────────────────────────────────────────────
 function statusLabel(s) {
-  return { pending: '待支付', paid: '已支付', cancelled: '已取消', refunded: '已退款' }[s] || s
+  return { pending: '待支付', paid: '已支付', cancelled: '已取消', refund_pending: '退款中', refunded: '已退款' }[s] || s
 }
 function statusClass(s) {
-  return { pending: 'status-pending', paid: 'status-paid', cancelled: 'status-cancel', refunded: 'status-refund' }[s] || ''
+  return { pending: 'status-pending', paid: 'status-paid', cancelled: 'status-cancel', refund_pending: 'status-refund-pending', refunded: 'status-refund' }[s] || ''
 }
 </script>
 
@@ -391,7 +316,7 @@ function statusClass(s) {
 
 /* ══ 顶部背景图 ══ */
 .header {
-  background: url('https://copade.net.cn/header.jpg') center/cover no-repeat;
+  background: #000;
   padding-bottom: 40rpx;
 }
 
@@ -614,77 +539,35 @@ function statusClass(s) {
   background: #fafafa;
   border-radius: 14rpx;
   margin-bottom: 16rpx;
+  padding: 24rpx;
   overflow: hidden;
 }
 .order-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20rpx 24rpx;
+  padding-bottom: 20rpx;
   border-bottom: 1rpx solid #f0f0f0;
 }
-.order-no     { font-size: 24rpx; color: #999; }
+.order-no     { font-size: 26rpx; color: #333; font-weight: 500; }
 .order-status { font-size: 24rpx; font-weight: bold; }
 .status-pending { color: #fa8c16; }
 .status-paid    { color: #52c41a; }
 .status-cancel  { color: #bbb;    }
+.status-refund-pending { color: #fa541c; }
 .status-refund  { color: #e74c3c; }
 
-.order-body { padding: 6rpx 24rpx; }
-.info-row {
+.order-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 12rpx 0;
+  padding: 16rpx 0;
   border-bottom: 1rpx solid #f5f5f5;
   &:last-child { border-bottom: none; }
 }
-.info-key { font-size: 24rpx; color: #999; }
-.info-val { font-size: 24rpx; color: #333; font-weight: 500; }
-
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14rpx 24rpx;
-  border-top: 1rpx solid #f0f0f0;
-}
-.order-amount-label { font-size: 24rpx; color: #999; }
-.order-price { font-size: 32rpx; font-weight: bold; color: #e74c3c; }
-
-/* 待支付操作按钮 - 右对齐 */
-.repay-wrap {
-  padding: 0 24rpx 20rpx;
-  display: flex;
-  justify-content: flex-end;
-  gap: 16rpx;
-}
-.cancel-btn {
-  width: 140rpx;
-  height: 52rpx;
-  line-height: 52rpx;
-  background: #fff;
-  color: #999;
-  border-radius: 26rpx;
-  font-size: 24rpx;
-  border: 2rpx solid #ddd;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-}
-.repay-btn {
-  width: 140rpx;
-  height: 52rpx;
-  line-height: 52rpx;
-  background: #e74c3c;
-  color: #fff;
-  border-radius: 26rpx;
-  font-size: 24rpx;
-  border: none;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-  float: none;
-}
+.order-label { font-size: 24rpx; color: #999; }
+.order-val   { font-size: 24rpx; color: #333; }
+.order-price { font-size: 28rpx; font-weight: bold; color: #e74c3c; }
 
 /* ══ 加载更多 ══ */
 .load-more-wrap {

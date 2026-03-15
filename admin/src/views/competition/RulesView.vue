@@ -1,7 +1,7 @@
 <template>
   <div class="rules-page">
     <!-- 工具栏 -->
-    <el-card class="toolbar-card">
+    <el-card class="toolbar-card"  shadow="never">
       <div class="toolbar">
         <span class="page-desc">管理小程序首页顶部展示的比赛规则（富文本）</span>
         <el-button type="primary" :icon="Plus" @click="openCreate">新建规则</el-button>
@@ -9,7 +9,7 @@
     </el-card>
 
     <!-- 规则列表 -->
-    <el-card class="table-card">
+    <el-card class="table-card"  shadow="never">
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="title" label="标题" min-width="200" />

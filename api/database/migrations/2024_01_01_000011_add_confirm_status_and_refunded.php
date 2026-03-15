@@ -17,7 +17,7 @@ class AddConfirmStatusAndRefunded extends Migration
         });
 
         // 2. 扩展 pay_status 枚举，增加 refunded
-        DB::statement("ALTER TABLE registrations MODIFY COLUMN pay_status ENUM('pending','paid','cancelled','refunded') NOT NULL DEFAULT 'pending' COMMENT '支付状态'");
+        DB::statement("ALTER TABLE registrations MODIFY COLUMN pay_status ENUM('pending','paid','cancelled','refund_pending','refunded') NOT NULL DEFAULT 'pending' COMMENT '支付状态'");
     }
 
     public function down()

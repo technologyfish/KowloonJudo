@@ -110,7 +110,7 @@ CREATE TABLE `registrations` (
   `package_key`        VARCHAR(30)      NULL     DEFAULT NULL     COMMENT '套餐 key（兼容旧数据）',
   `package_label`      VARCHAR(80)      NULL     DEFAULT NULL     COMMENT '套餐名称',
   `amount`             DECIMAL(8,2)     NOT NULL DEFAULT 0.00    COMMENT '应付金额（元）',
-  `pay_status`         ENUM('pending','paid','cancelled','refunded')
+  `pay_status`         ENUM('pending','paid','cancelled','refund_pending','refunded')
                                         NOT NULL DEFAULT 'pending' COMMENT '支付状态',
   `confirm_status`     VARCHAR(20)      NOT NULL DEFAULT 'pending' COMMENT '确认状态: pending待确认, confirmed已确认',
   `wx_prepay_id`       VARCHAR(255)     NOT NULL DEFAULT ''      COMMENT '微信预支付 ID',
@@ -134,7 +134,8 @@ INSERT INTO `migrations` (`migration`, `batch`) VALUES
   ('2024_01_01_000003_create_competition_rules_table',1),
   ('2024_01_01_000004_create_registrations_table',    1),
   ('2024_01_01_000010_add_birthday_to_registrations', 2),
-  ('2024_01_01_000011_add_confirm_status_and_refunded', 2);
+  ('2024_01_01_000011_add_confirm_status_and_refunded', 2),
+  ('2024_01_01_000013_add_refund_pending_to_pay_status', 3);
 
 -- 超级管理员（密码：Admin@123456）
 INSERT INTO `admins` (`name`, `email`, `password`, `role`, `avatar`, `status`, `created_at`, `updated_at`)

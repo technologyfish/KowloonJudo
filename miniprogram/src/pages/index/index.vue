@@ -1,6 +1,22 @@
 <template>
   <scroll-view class="page" scroll-y :scroll-into-view="scrollToField" scroll-with-animation>
 
+    <!-- ⓪ 隐私授权弹窗 -->
+    <view v-if="showPrivacy" class="privacy-mask" @touchmove.stop.prevent>
+      <view class="privacy-sheet">
+        <text class="privacy-sheet-title">COPADECHN 体育健身小程序道隐私保护提示</text>
+        <view class="privacy-sheet-body">
+          <text class="privacy-sheet-text">为更好保护您的个人信息安全，请您仔细阅读并理解</text>
+          <text class="privacy-sheet-link" @click="viewPrivacy">《COPADECHN 体育健身小程序隐私保护指引》</text>
+          <text class="privacy-sheet-text">如您已阅读并同意上述条款，请点击"同意并继续"开始使用我们的服务</text>
+        </view>
+        <view class="privacy-sheet-btns">
+          <button class="privacy-btn-view" @click="viewPrivacy">查看</button>
+          <button class="privacy-btn-agree" @click="handleAgreePrivacy">同意并继续</button>
+        </view>
+      </view>
+    </view>
+
     <!-- ① 比赛规则富文本 -->
     <view v-if="rule" class="rule-card">
       <view class="rule-header">
@@ -242,6 +258,39 @@ import { useRegistrationStore } from '@/store/registration'
 import { useUserStore } from '@/store/user'
 import { getLatestRule, getFeeSettings, submitRegistration, createPayOrder, queryPayResult } from '@/api/competition'
 import { getGIWeights, getNOGIWeights, getBeltColors, AGE_GROUPS, isAdultGroup, getAvailableAgeGroups } from '@/utils/weightTable'
+
+// ─── 隐私授权弹窗（localStorage 控制，首次打开弹出）──────────
+const showPrivacy = ref(false)
+
+onMounted(() => {
+  try {
+    const agreed = uni.getStorageSync('privacy_agreed')
+    if (!agreed) {
+      showPrivacy.value = true
+    }
+  } catch {
+    showPrivacy.value = true
+  }
+})
+
+function viewPrivacy() {
+  // 优先打开微信后台配置的隐私保护指引
+  if (typeof wx !== 'undefined' && wx.openPrivacyContract) {
+    wx.openPrivacyContract({
+      fail() {
+        // 如果微信 API 调用失败，兜底跳转本地页面
+        uni.navigateTo({ url: '/pages/agreement/privacy' })
+      }
+    })
+  } else {
+    uni.navigateTo({ url: '/pages/agreement/privacy' })
+  }
+}
+
+function handleAgreePrivacy() {
+  uni.setStorageSync('privacy_agreed', '1')
+  showPrivacy.value = false
+}
 
 // ─── 比赛规则 ──────────────────────────────────────────────
 const rule = ref(null)
@@ -559,6 +608,73 @@ async function handleSubmit() {
 .page {
   min-height: 100vh;
   background: #f5f5f5;
+}
+
+/* ── 隐私授权底部弹窗 ── */
+.privacy-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+}
+.privacy-sheet {
+  width: 100%;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 40rpx 40rpx calc(40rpx + env(safe-area-inset-bottom));
+}
+.privacy-sheet-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin-bottom: 24rpx;
+}
+.privacy-sheet-body {
+  line-height: 1.8;
+  margin-bottom: 36rpx;
+}
+.privacy-sheet-text {
+  font-size: 28rpx;
+  color: #666;
+}
+.privacy-sheet-link {
+  font-size: 28rpx;
+  color: #1677ff;
+}
+.privacy-sheet-btns {
+  display: flex;
+  gap: 24rpx;
+}
+.privacy-btn-view {
+  flex: 1;
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #333;
+  background: #f5f5f5;
+  border-radius: 42rpx;
+  border: none;
+  &::after { border: none; }
+}
+.privacy-btn-agree {
+  flex: 1.5;
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #fff;
+  background: #e74c3c;
+  border-radius: 42rpx;
+  border: none;
+  font-weight: 500;
+  &::after { border: none; }
 }
 
 /* ── 规则卡片 ── */

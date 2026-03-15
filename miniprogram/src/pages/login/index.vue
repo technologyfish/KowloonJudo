@@ -85,17 +85,13 @@ onMounted(() => {
   checking.value = false
 })
 
-// ── 显示协议内容 ─────────────────────────────────────────────
+// ── 跳转协议页面 ─────────────────────────────────────────────
 function showPrivacy(type) {
-  const isService = type === 'service'
-  uni.showModal({
-    title: isService ? '用户服务协议' : '隐私政策',
-    content: isService
-      ? '本协议规范用户在九龙柔道小程序的报名、支付等服务使用行为。用户注册即视为同意本协议。禁止利用本平台从事违法活动，平台有权对违规账号进行处理。'
-      : '本应用收集您的微信昵称、头像用于账号展示，收集手机号用于报名联系，所有信息仅用于九龙柔道赛事报名，不会分享给任何第三方，依法保护您的个人隐私。',
-    showCancel: false,
-    confirmText: '我知道了'
-  })
+  if (type === 'service') {
+    uni.navigateTo({ url: '/pages/agreement/service' })
+  } else {
+    uni.navigateTo({ url: '/pages/agreement/privacy' })
+  }
 }
 
 // ── Step1: 微信登录 ─────────────────────────────────────────
