@@ -38,16 +38,31 @@
         <text class="form-required-tip">* 为必填项</text>
       </view>
 
+      <!-- 赛事站点 -->
+      <view class="form-item" id="field-site">
+        <text class="label">赛事站点 <text class="required">*</text></text>
+        <picker class="picker" :range="siteNames" @change="onSiteChange" :disabled="!sites.length">
+          <view class="picker-view" :class="{ disabled: !sites.length }">
+            <text :class="form.site_id ? 'picker-val' : 'picker-placeholder'">
+              {{ currentSiteName || (sites.length ? '请选择赛事站点' : '暂无可选站点') }}
+            </text>
+            <text class="picker-arrow">▼</text>
+          </view>
+        </picker>
+        <text v-if="formErrors.site" class="field-error">{{ formErrors.site }}</text>
+      </view>
+
       <!-- 姓名（拼音） -->
-      <view class="form-item">
+      <view class="form-item" id="field-name">
         <text class="label">姓名（拼音）</text>
-        <input class="input" v-model="form.name_pinyin" placeholder="请输入姓名（拼音）" />
+        <input class="input" v-model="form.name_pinyin" placeholder="请输入姓名（拼音）" @input="formErrors.name = ''" />
       </view>
 
       <!-- 姓名（汉字） -->
       <view class="form-item">
         <text class="label">姓名（汉字）</text>
-        <input class="input" v-model="form.name_cn" placeholder="请输入姓名（汉字）" />
+        <input class="input" v-model="form.name_cn" placeholder="请输入姓名（汉字）" @input="formErrors.name = ''" />
+        <text v-if="formErrors.name" class="field-error">{{ formErrors.name }}</text>
       </view>
 
       <!-- 手机号码 -->
@@ -256,7 +271,7 @@
 import { ref, computed, reactive, onMounted, nextTick } from 'vue'
 import { useRegistrationStore } from '@/store/registration'
 import { useUserStore } from '@/store/user'
-import { getLatestRule, getFeeSettings, submitRegistration, createPayOrder, queryPayResult } from '@/api/competition'
+import { getLatestRule, getFeeSettings, getActiveSites, submitRegistration, createPayOrder, queryPayResult } from '@/api/competition'
 import { getGIWeights, getNOGIWeights, getBeltColors, AGE_GROUPS, isAdultGroup, getAvailableAgeGroups } from '@/utils/weightTable'
 
 // ─── 隐私授权弹窗（localStorage 控制，首次打开弹出）──────────
@@ -311,11 +326,30 @@ const feeConfig = reactive({
   open_weight_fee: 80,
 })
 
+// ─── 赛事站点 ──────────────────────────────────────────────
+const sites = ref([])         // [{ id, label, value }, ...]
+const siteNames = computed(() => sites.value.map(s => s.label))
+const currentSiteName = computed(() => {
+  if (!form.value.site_id) return ''
+  const s = sites.value.find(s => s.id === form.value.site_id)
+  return s ? s.label : ''
+})
+
+function onSiteChange(e) {
+  const idx = Number(e.detail.value)
+  const s = sites.value[idx]
+  if (s) {
+    form.value.site_id = s.id
+    formErrors.site = ''
+  }
+}
+
 onMounted(async () => {
-  // 并行获取规则 + 费用
-  const [ruleRes, feeRes] = await Promise.allSettled([
+  // 并行获取规则 + 费用 + 站点
+  const [ruleRes, feeRes, siteRes] = await Promise.allSettled([
     getLatestRule(),
     getFeeSettings(),
+    getActiveSites(),
   ])
 
   if (ruleRes.status === 'fulfilled') {
@@ -325,6 +359,13 @@ onMounted(async () => {
     const d = feeRes.value.data
     feeConfig.category_fee    = Number(d.category_fee) || 360
     feeConfig.open_weight_fee = Number(d.open_weight_fee) || 80
+  }
+  if (siteRes.status === 'fulfilled') {
+    sites.value = siteRes.value.data || []
+    // 如果只有一个站点，自动选中
+    if (sites.value.length === 1) {
+      form.value.site_id = sites.value[0].id
+    }
   }
 
   ruleLoading.value = false
@@ -339,6 +380,8 @@ const submitting = ref(false)
 // ─── 字段级别错误 & 滚动定位 ─────────────────────────────────
 const scrollToField = ref('')
 const formErrors = reactive({
+  site: '',
+  name: '',
   phone: '',
   email: '',
   nationality: '',
@@ -491,6 +534,20 @@ function validate() {
   // 先清空所有错误
   Object.keys(formErrors).forEach(k => formErrors[k] = '')
   let firstError = ''
+
+  // 赛事站点检查
+  if (!form.value.site_id) {
+    formErrors.site = '请选择赛事站点'
+    if (!firstError) firstError = 'site'
+  }
+
+  // 姓名至少填一个
+  const hasPinyin = String(form.value.name_pinyin || '').trim()
+  const hasCn     = String(form.value.name_cn || '').trim()
+  if (!hasPinyin && !hasCn) {
+    formErrors.name = '姓名（拼音）和姓名（汉字）至少填写一项'
+    if (!firstError) firstError = 'name'
+  }
 
   // 必填项检查（一次性收集所有错误）
   const requiredFields = [
@@ -771,6 +828,12 @@ async function handleSubmit() {
 }
 
 /* ── 字段级错误 ── */
+.field-hint {
+  display: block;
+  font-size: 22rpx;
+  color: #999;
+  padding: 4rpx 0 0;
+}
 .field-error {
   display: block;
   font-size: 22rpx;

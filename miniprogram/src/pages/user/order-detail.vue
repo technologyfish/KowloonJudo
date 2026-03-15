@@ -21,6 +21,10 @@
       <!-- ══ 订单信息卡片 ══ -->
       <view class="card">
         <view class="card-title">报名信息</view>
+        <view  class="info-row">
+          <text class="info-key">赛事站点</text>
+          <text class="info-val">{{ order.site_name }}</text>
+        </view>
         <view class="info-row">
           <text class="info-key">姓名</text>
           <text class="info-val">{{ order.name_cn || order.name_pinyin }}</text>

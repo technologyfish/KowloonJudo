@@ -179,18 +179,25 @@ const NOGI_WEIGHTS = {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  带色
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const CHILDREN_BELTS = ['白带', '灰带', '黄带', '橙带', '绿带']
-const ADULT_BELTS    = ['白带', '蓝带', '紫带', '棕带', '黑带']
+const CHILDREN_BELTS = ['白带', '灰带', '黄带', '橙带', '绿带']   // 4-15岁
+const YOUTH_BELTS    = ['白带', '蓝带', '紫带', '棕带', '黑带']   // 16-17岁
+const ADULT_BELTS    = ['白带', '蓝带', '紫带', '棕带', '黑带']   // 18岁以上
 
 /**
  * 根据年龄组别获取可选带色
+ * 4-15岁：白灰黄橙绿
+ * 16-17岁：白蓝紫棕黑
+ * 成人/大师：白蓝紫棕黑
  * @param {string} ageGroup
  * @returns {string[]}
  */
 export function getBeltColors(ageGroup) {
   if (!ageGroup) return []
-  if (CHILDREN_GROUPS.includes(ageGroup) || ageGroup === YOUTH_GROUP) {
+  if (CHILDREN_GROUPS.includes(ageGroup)) {
     return CHILDREN_BELTS
+  }
+  if (ageGroup === YOUTH_GROUP) {
+    return YOUTH_BELTS
   }
   return ADULT_BELTS
 }

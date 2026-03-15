@@ -33,6 +33,11 @@
             {{ statusLabel(order.pay_status) }}
           </text>
         </view>
+        <!-- 赛事站点 -->
+        <view v-if="order.site_name" class="order-row">
+          <text class="order-label">赛事站点</text>
+          <text class="order-val">{{ order.site_name }}</text>
+        </view>
         <!-- 第二行：下单时间 -->
         <view class="order-row">
           <text class="order-label">下单时间</text>

@@ -4,6 +4,7 @@ import { ref } from 'vue'
 export const useRegistrationStore = defineStore('registration', () => {
   // 当前表单数据
   const formData = ref({
+    site_id: null,       // 赛事站点ID
     name_pinyin: '',     // 姓名（拼音）
     name_cn: '',         // 姓名（汉字）
     phone: '',           // 手机号码
@@ -41,6 +42,7 @@ export const useRegistrationStore = defineStore('registration', () => {
 
   function resetForm() {
     formData.value = {
+      site_id: null,
       name_pinyin: '', name_cn: '', phone: '', email: '',
       nationality: '', gender: '', id_card: '', birthday: '',
       age_group: '', belt_color: '',

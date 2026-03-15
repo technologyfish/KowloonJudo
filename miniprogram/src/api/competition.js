@@ -3,6 +3,12 @@ import { get, post } from '@/utils/request'
 /** 获取最新比赛规则 */
 export const getLatestRule = () => get('/competition/rule')
 
+/** 获取字典数据项（按类型编码） */
+export const getDictItems = (typeCode) => get('/dict/items', { type_code: typeCode })
+
+/** 获取启用的赛事站点列表（下拉选择） */
+export const getActiveSites = () => getDictItems('competition_site')
+
 /** 获取费用设置（组别费用 + 无差别费用） */
 export const getFeeSettings = () => get('/settings/fees')
 
