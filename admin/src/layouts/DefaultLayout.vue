@@ -1,112 +1,122 @@
 <template>
   <div class="layout-wrapper">
     <!-- 上部：侧边栏 + 右侧主区域 -->
-    <el-container class="layout-root">
+  <el-container class="layout-root">
 
-      <!-- ── 侧边栏 ── -->
-      <el-aside width="220px" class="layout-aside">
-        <!-- Logo -->
-        <div class="aside-logo">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="flex-shrink:0">
-            <rect width="28" height="28" rx="7" fill="#1677ff"/>
-            <path d="M14 5C9.029 5 5 9.029 5 14C5 18.971 9.029 23 14 23C18.971 23 23 18.971 23 14C23 9.029 18.971 5 14 5Z" stroke="white" stroke-width="1.8"/>
-            <path d="M9.5 14L12.5 17L18.5 10.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="logo-text">KowloonJudo</span>
+    <!-- ── 侧边栏 ── -->
+    <el-aside width="220px" class="layout-aside">
+      <!-- Logo -->
+      <div class="aside-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="flex-shrink:0">
+          <rect width="28" height="28" rx="7" fill="#1677ff"/>
+          <path d="M14 5C9.029 5 5 9.029 5 14C5 18.971 9.029 23 14 23C18.971 23 23 18.971 23 14C23 9.029 18.971 5 14 5Z" stroke="white" stroke-width="1.8"/>
+          <path d="M9.5 14L12.5 17L18.5 10.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="logo-text">COPA DE CHN</span>
+      </div>
+
+      <!-- 导航菜单 -->
+      <el-menu
+        :default-active="activeMenu"
+        router
+        class="side-menu"
+        :collapse="false"
+      >
+        <el-menu-item index="/dashboard">
+          <el-icon><Odometer /></el-icon>
+          <span>控制台</span>
+        </el-menu-item>
+
+        <div class="menu-group-label">比赛管理</div>
+
+        <el-menu-item index="/competition/rules">
+          <el-icon><Document /></el-icon>
+          <span>比赛规则</span>
+        </el-menu-item>
+
+        <el-menu-item index="/competition/registrations">
+          <el-icon><List /></el-icon>
+          <span>报名记录</span>
+        </el-menu-item>
+
+        <el-menu-item index="/competition/fee-settings">
+          <el-icon><Money /></el-icon>
+          <span>费用设置</span>
+        </el-menu-item>
+
+        <el-menu-item index="/bill/stats">
+          <el-icon><Wallet /></el-icon>
+          <span>账单统计</span>
+        </el-menu-item>
+
+        <el-menu-item index="/announcements">
+          <el-icon><Bell /></el-icon>
+          <span>公告管理</span>
+        </el-menu-item>
+
+        <div class="menu-group-label">系统管理</div>
+
+        <el-menu-item index="/users">
+          <el-icon><User /></el-icon>
+          <span>用户管理</span>
+        </el-menu-item>
+
+          <el-menu-item index="/system/dict">
+            <el-icon><Collection /></el-icon>
+            <span>字典管理</span>
+          </el-menu-item>
+      </el-menu>
+    </el-aside>
+
+    <!-- ── 右侧主区域 ── -->
+    <el-container class="layout-right">
+
+      <!-- 顶部 Header -->
+      <el-header class="layout-header">
+        <div class="header-left">
+          <!-- 面包屑 -->
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item :to="{ path: '/dashboard' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item v-if="currentTitle">{{ currentTitle }}</el-breadcrumb-item>
+          </el-breadcrumb>
         </div>
 
-        <!-- 导航菜单 -->
-        <el-menu
-          :default-active="activeMenu"
-          router
-          class="side-menu"
-          :collapse="false"
-        >
-          <el-menu-item index="/dashboard">
-            <el-icon><Odometer /></el-icon>
-            <span>控制台</span>
-          </el-menu-item>
+        <div class="header-right">
+          <el-divider direction="vertical" style="margin: 0 12px" />
 
-          <div class="menu-group-label">比赛管理</div>
+          <el-dropdown @command="handleCommand" trigger="click">
+            <div class="user-trigger">
+              <el-avatar :size="30" style="background:#1677ff;flex-shrink:0">
+                <el-icon size="16"><UserFilled /></el-icon>
+              </el-avatar>
+              <span class="username">{{ authStore.userInfo?.name || '管理员' }}</span>
+              <el-icon size="12" style="color:#aaa"><ArrowDown /></el-icon>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item disabled>
+                  <span style="font-size:12px;color:#999">{{ authStore.userInfo?.email }}</span>
+                </el-dropdown-item>
+                <el-dropdown-item divided command="logout" style="color:#f56c6c">
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </el-header>
 
-          <el-menu-item index="/competition/rules">
-            <el-icon><Document /></el-icon>
-            <span>比赛规则</span>
-          </el-menu-item>
+      <!-- 内容区 -->
+      <el-main class="layout-main">
+        <!-- 页面标题栏 -->
+        <div v-if="currentTitle" class="page-header">
+          <span class="page-header-title">{{ currentTitle }}</span>
+        </div>
 
-          <el-menu-item index="/competition/registrations">
-            <el-icon><List /></el-icon>
-            <span>报名记录</span>
-          </el-menu-item>
-
-          <el-menu-item index="/competition/fee-settings">
-            <el-icon><Money /></el-icon>
-            <span>费用设置</span>
-          </el-menu-item>
-
-          <el-menu-item index="/announcements">
-            <el-icon><Bell /></el-icon>
-            <span>公告管理</span>
-          </el-menu-item>
-
-          <div class="menu-group-label">系统管理</div>
-
-          <el-menu-item index="/users">
-            <el-icon><User /></el-icon>
-            <span>用户管理</span>
-          </el-menu-item>
-        </el-menu>
-      </el-aside>
-
-      <!-- ── 右侧主区域 ── -->
-      <el-container class="layout-right">
-
-        <!-- 顶部 Header -->
-        <el-header class="layout-header">
-          <div class="header-left">
-            <!-- 面包屑 -->
-            <el-breadcrumb separator="/">
-              <el-breadcrumb-item :to="{ path: '/dashboard' }">首页</el-breadcrumb-item>
-              <el-breadcrumb-item v-if="currentTitle">{{ currentTitle }}</el-breadcrumb-item>
-            </el-breadcrumb>
-          </div>
-
-          <div class="header-right">
-            <el-divider direction="vertical" style="margin: 0 12px" />
-
-            <el-dropdown @command="handleCommand" trigger="click">
-              <div class="user-trigger">
-                <el-avatar :size="30" style="background:#1677ff;flex-shrink:0">
-                  <el-icon size="16"><UserFilled /></el-icon>
-                </el-avatar>
-                <span class="username">{{ authStore.userInfo?.name || '管理员' }}</span>
-                <el-icon size="12" style="color:#aaa"><ArrowDown /></el-icon>
-              </div>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item disabled>
-                    <span style="font-size:12px;color:#999">{{ authStore.userInfo?.email }}</span>
-                  </el-dropdown-item>
-                  <el-dropdown-item divided command="logout" style="color:#f56c6c">
-                    退出登录
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
-        </el-header>
-
-        <!-- 内容区 -->
-        <el-main class="layout-main">
-          <!-- 页面标题栏 -->
-          <div v-if="currentTitle" class="page-header">
-            <span class="page-header-title">{{ currentTitle }}</span>
-          </div>
-
-          <router-view />
-        </el-main>
-      </el-container>
+        <router-view />
+      </el-main>
     </el-container>
+  </el-container>
 
     <!-- 公共底部备案信息（全宽，文档流） -->
     <div class="global-footer">
@@ -121,7 +131,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import {
-  Odometer, Document, List, User, Bell, Money,
+  Odometer, Document, List, User, Bell, Money, Collection, Wallet,
   UserFilled, ArrowDown
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'

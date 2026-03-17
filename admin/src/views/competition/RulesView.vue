@@ -1,7 +1,7 @@
 <template>
   <div class="rules-page">
     <!-- 工具栏 -->
-    <el-card class="toolbar-card"  shadow="never">
+    <el-card class="toolbar-card" shadow="never">
       <div class="toolbar">
         <span class="page-desc">管理小程序首页顶部展示的比赛规则（富文本）</span>
         <el-button type="primary" :icon="Plus" @click="openCreate">新建规则</el-button>
@@ -9,7 +9,7 @@
     </el-card>
 
     <!-- 规则列表 -->
-    <el-card class="table-card"  shadow="never">
+    <el-card class="table-card" shadow="never">
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="title" label="标题" min-width="200" />
@@ -27,9 +27,10 @@
     <el-dialog
       v-model="dialogVisible"
       :title="editId ? '编辑比赛规则' : '新建比赛规则'"
-      width="800px"
+      width="900px"
       top="6vh"
       destroy-on-close
+      @closed="onDialogClosed"
     >
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="90px">
         <el-form-item label="标题" prop="title">
@@ -56,33 +57,19 @@
         </el-form-item>
 
         <el-form-item label="规则内容" prop="content">
-          <!-- 富文本编辑器工具栏 -->
           <div class="editor-wrap">
-            <div class="editor-toolbar">
-              <el-button-group size="small">
-                <el-button @click="execCmd('bold')"><b>B</b></el-button>
-                <el-button @click="execCmd('italic')"><i>I</i></el-button>
-                <el-button @click="execCmd('underline')"><u>U</u></el-button>
-              </el-button-group>
-              <el-button-group size="small" style="margin-left:8px">
-                <el-button @click="execCmd('insertUnorderedList')">• 列表</el-button>
-                <el-button @click="execCmd('insertOrderedList')">1. 列表</el-button>
-              </el-button-group>
-              <el-select
-                v-model="fontSize"
-                size="small"
-                style="width:100px;margin-left:8px"
-                @change="execCmd('fontSize', fontSize)"
-              >
-                <el-option v-for="s in [1,2,3,4,5,6,7]" :key="s" :label="`字号 ${s}`" :value="s" />
-              </el-select>
-            </div>
-            <div
-              ref="editorRef"
-              class="editor-content"
-              contenteditable="true"
-              @input="onEditorInput"
-              v-html="form.content"
+            <Toolbar
+              :editor="editorRef"
+              :default-config="toolbarConfig"
+              :mode="'default'"
+              style="border-bottom: 1px solid #ccc"
+            />
+            <Editor
+              v-model="form.content"
+              :default-config="editorConfig"
+              :mode="'default'"
+              style="height: 400px; overflow-y: hidden"
+              @onCreated="handleCreated"
             />
           </div>
           <div v-if="contentError" class="el-form-item__error">请输入规则内容</div>
@@ -98,13 +85,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, shallowRef, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import '@wangeditor/editor/dist/css/style.css'
+import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import {
   getRuleList, createRule, updateRule, deleteRule,
   type CompetitionRule
 } from '@/api/competition'
+
+// ── WangEditor 实例 ─────────────────────────────────────
+const editorRef = shallowRef()
+
+const toolbarConfig = {}
+const editorConfig = {
+  placeholder: '请在此输入比赛规则内容...',
+}
+
+function handleCreated(editor: any) {
+  editorRef.value = editor
+}
+
+// 对话框关闭时销毁编辑器实例
+function onDialogClosed() {
+  if (editorRef.value) {
+    editorRef.value.destroy()
+    editorRef.value = null
+  }
+}
+
+onBeforeUnmount(() => {
+  if (editorRef.value) {
+    editorRef.value.destroy()
+  }
+})
 
 // ── 时间格式化 ─────────────────────────────────────
 function formatTime(_row: any, _col: any, val: string) {
@@ -135,8 +150,6 @@ const dialogVisible = ref(false)
 const saving = ref(false)
 const editId = ref<number | null>(null)
 const formRef = ref<FormInstance>()
-const editorRef = ref<HTMLDivElement>()
-const fontSize = ref(3)
 const contentError = ref(false)
 
 const defaultDate = () => new Date().toISOString().slice(0, 10)
@@ -164,9 +177,6 @@ function resetForm() {
 function openCreate() {
   resetForm()
   dialogVisible.value = true
-  nextTick(() => {
-    if (editorRef.value) editorRef.value.innerHTML = ''
-  })
 }
 
 function openEdit(row: CompetitionRule) {
@@ -177,24 +187,11 @@ function openEdit(row: CompetitionRule) {
   form.content = row.content
   form.created_at = (row as any).created_at?.slice(0, 10) || defaultDate()
   dialogVisible.value = true
-  nextTick(() => {
-    if (editorRef.value) editorRef.value.innerHTML = form.content
-  })
-}
-
-function onEditorInput() {
-  form.content = editorRef.value?.innerHTML || ''
-  if (form.content) contentError.value = false
-}
-
-function execCmd(cmd: string, val?: any) {
-  document.execCommand(cmd, false, val)
-  form.content = editorRef.value?.innerHTML || ''
 }
 
 async function handleSave() {
   await formRef.value?.validate()
-  if (!form.content.trim()) {
+  if (!form.content.trim() || form.content === '<p><br></p>') {
     contentError.value = true
     return
   }
@@ -236,34 +233,12 @@ async function handleDelete(row: CompetitionRule) {
 
 .table-card { flex: 1; }
 
-/* ── 富文本编辑器 ── */
+/* ── WangEditor 容器 ── */
 .editor-wrap {
   width: 100%;
-  border: 1px solid #dcdfe6;
+  border: 1px solid #ccc;
   border-radius: 4px;
   overflow: hidden;
-}
-.editor-toolbar {
-  display: flex;
-  align-items: center;
-  padding: 8px 10px;
-  border-bottom: 1px solid #ebeef5;
-  background: #fafafa;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.editor-content {
-  min-height: 240px;
-  padding: 12px 14px;
-  outline: none;
-  font-size: 14px;
-  line-height: 1.8;
-  color: #333;
-  overflow-y: auto;
-}
-.editor-content:empty::before {
-  content: '请在此输入比赛规则内容...';
-  color: #c0c4cc;
-  pointer-events: none;
+  z-index: 100;
 }
 </style>

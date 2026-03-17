@@ -42,6 +42,9 @@
     <!-- 最近报名记录 -->
     <el-card class="mt-20" shadow="never" header="最近报名记录">
       <el-table :data="recentRegs" stripe size="small">
+        <el-table-column prop="site_name" label="赛事站点" width="160">
+          <template #default="{ row }">{{ row.site_name || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="name_cn" label="姓名" width="100" />
         <el-table-column prop="age_group" label="年龄组" width="120" />
         <el-table-column prop="belt_color" label="带色" width="80" />

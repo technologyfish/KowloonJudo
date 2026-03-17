@@ -35,11 +35,24 @@ const router = createRouter({
           component: () => import('@/views/competition/RegistrationsView.vue'),
           meta: { title: '报名记录', icon: 'List' }
         },
+        // ── 系统管理 ──
+        {
+          path: 'system/dict',
+          name: 'system-dict',
+          component: () => import('@/views/system/DictView.vue'),
+          meta: { title: '字典管理', icon: 'Collection' }
+        },
         {
           path: 'competition/fee-settings',
           name: 'competition-fee-settings',
           component: () => import('@/views/competition/FeeSettingsView.vue'),
           meta: { title: '费用设置', icon: 'Money' }
+        },
+        {
+          path: 'bill/stats',
+          name: 'bill-stats',
+          component: () => import('@/views/bill/BillStatsView.vue'),
+          meta: { title: '账单统计', icon: 'Wallet' }
         },
         // ── 公告管理 ──
         {

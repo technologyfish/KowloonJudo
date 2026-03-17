@@ -9,37 +9,39 @@
             placeholder="搜索姓名/手机号/战队"
             :prefix-icon="Search"
             clearable
-            style="width:220px"
+            style="width:200px"
             @keyup.enter="fetchList"
           />
-          <el-select v-model="query.pay_status" placeholder="支付状态" clearable style="width:140px">
+          <el-select v-model="query.pay_status" placeholder="支付状态" clearable style="width:120px">
             <el-option label="待支付" value="pending" />
             <el-option label="已支付" value="paid" />
             <el-option label="已取消" value="cancelled" />
             <el-option label="退款中" value="refund_pending" />
             <el-option label="已退款" value="refunded" />
           </el-select>
-          <el-select v-model="query.confirm_status" placeholder="审核状态" clearable style="width:120px">
+          <el-select v-model="query.confirm_status" placeholder="审核状态" clearable style="width:110px">
             <el-option label="未通过" value="pending" />
             <el-option label="已通过" value="confirmed" />
           </el-select>
           <el-select v-model="query.age_group" placeholder="年龄组别" clearable style="width:140px">
             <el-option v-for="a in AGE_GROUPS" :key="a" :label="a" :value="a" />
           </el-select>
+          <el-select v-model="query.site_id" placeholder="赛事站点" clearable style="width:180px">
+            <el-option v-for="s in siteOptions" :key="s.id" :label="s.label" :value="s.id" />
+          </el-select>
+          <el-date-picker
+            v-model="query.date_range"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="YYYY-MM-DD"
+            style="width:260px"
+          />
           <el-button type="primary" :icon="Search" @click="fetchList">搜索</el-button>
         </div>
         <div class="toolbar-right">
-          <el-dropdown @command="handleExportCommand">
-            <el-button :icon="Download">
-              导出 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="confirmed">仅导出已确认</el-dropdown-item>
-                <el-dropdown-item command="all">导出全部</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          <el-button :icon="Download" @click="openExportDialog">导出</el-button>
         </div>
       </div>
 
@@ -52,6 +54,7 @@
         border
       >
         <el-table-column prop="id" label="ID" width="70" />
+
         <el-table-column prop="order_no" label="订单号" width="140" />
         <el-table-column prop="package_label" label="套餐" width="160" />
         <el-table-column prop="amount" label="金额" width="80">
@@ -76,6 +79,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="site_name" label="赛事站点" width="160" />
         <el-table-column prop="name_cn" label="姓名（汉字）" width="110" />
         <el-table-column prop="name_pinyin" label="姓名（拼音）" width="130" />
         <el-table-column prop="gender" label="性别" width="70" />
@@ -84,6 +88,16 @@
         <el-table-column prop="belt_color" label="带色" width="80" />
         <el-table-column prop="weight_gi" label="体重（道服）" width="120" />
         <el-table-column prop="weight_nogi" label="体重（无道服）" width="130" />
+        <el-table-column label="证件类型" width="90">
+          <template #default="{ row }">
+            {{ (row.id_type || 'id_card') === 'passport' ? '护照' : '身份证' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="证件号码" width="180">
+          <template #default="{ row }">
+            {{ (row.id_type || 'id_card') === 'passport' ? row.passport_no : row.id_card }}
+          </template>
+        </el-table-column>
         <el-table-column prop="team" label="战队" width="120" />
         <el-table-column prop="phone" label="手机号" width="130" />
 
@@ -155,6 +169,7 @@
     <!-- 审核预览对话框（只读） -->
     <el-dialog v-model="auditDialogVisible" title="审核报名信息" width="650px" destroy-on-close>
       <el-descriptions :column="2" border size="default">
+        <el-descriptions-item label="赛事站点">{{ auditRow.site_name || '—' }}</el-descriptions-item>
         <el-descriptions-item label="订单号">{{ auditRow.order_no }}</el-descriptions-item>
         <el-descriptions-item label="套餐">{{ auditRow.package_label }}</el-descriptions-item>
         <el-descriptions-item label="金额">
@@ -176,7 +191,8 @@
         <el-descriptions-item label="出生日期">{{ auditRow.birthday }}</el-descriptions-item>
         <el-descriptions-item label="手机号">{{ auditRow.phone }}</el-descriptions-item>
         <el-descriptions-item label="邮箱">{{ auditRow.email }}</el-descriptions-item>
-        <el-descriptions-item label="身份证">{{ auditRow.id_card }}</el-descriptions-item>
+        <el-descriptions-item label="证件类型">{{ (auditRow.id_type || 'id_card') === 'passport' ? '护照' : '身份证' }}</el-descriptions-item>
+        <el-descriptions-item label="证件号码">{{ (auditRow.id_type || 'id_card') === 'passport' ? auditRow.passport_no : auditRow.id_card }}</el-descriptions-item>
         <el-descriptions-item label="国籍">{{ auditRow.nationality }}</el-descriptions-item>
         <el-descriptions-item label="年龄组别">{{ auditRow.age_group }}</el-descriptions-item>
         <el-descriptions-item label="带色">{{ auditRow.belt_color }}</el-descriptions-item>
@@ -195,6 +211,20 @@
     <!-- 编辑对话框 -->
     <el-dialog v-model="editDialogVisible" title="修改报名信息" width="700px" destroy-on-close>
       <el-form :model="editForm" label-width="110px" v-loading="editLoading">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="赛事站点">
+              <el-select v-model="editForm.site_id" style="width:100%" placeholder="请选择赛事站点" @change="onSiteChange">
+                <el-option
+                  v-for="s in siteOptions"
+                  :key="s.id"
+                  :label="s.label"
+                  :value="s.id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="姓名（汉字）">
@@ -236,10 +266,23 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="身份证">
-              <el-input v-model="editForm.id_card" />
+            <el-form-item label="证件类型">
+              <el-select v-model="editForm.id_type" style="width:100%">
+                <el-option label="身份证" value="id_card" />
+                <el-option label="护照" value="passport" />
+              </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item v-if="editForm.id_type !== 'passport'" label="身份证号">
+              <el-input v-model="editForm.id_card" />
+            </el-form-item>
+            <el-form-item v-else label="护照号码">
+              <el-input v-model="editForm.passport_no" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="国籍">
               <el-input v-model="editForm.nationality" />
@@ -312,6 +355,38 @@
         <el-button type="primary" :loading="editLoading" @click="handleEditSubmit">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 导出对话框 -->
+    <el-dialog v-model="exportDialogVisible" title="导出报名记录" width="520px" destroy-on-close :close-on-click-modal="false">
+      <el-form label-width="90px">
+        <el-form-item label="导出范围">
+          <el-radio-group v-model="exportForm.scope">
+            <el-radio value="confirmed">仅已确认</el-radio>
+            <el-radio value="all">全部</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="时间周期">
+          <el-date-picker
+            v-model="exportForm.date_range"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="YYYY-MM-DD"
+            style="width:280px"
+          />
+        </el-form-item>
+        <el-form-item label="赛事站点">
+          <el-select v-model="exportForm.site_id" placeholder="全部站点" clearable style="width:220px">
+            <el-option v-for="s in siteOptions" :key="s.id" :label="s.label" :value="s.id" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="exportDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="exportLoading" @click="handleExport">确认导出</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -327,6 +402,7 @@ import {
   updateRegistration,
   deleteRegistration,
 } from '@/api/competition'
+import { getDictItems } from '@/api/dict'
 
 const AGE_GROUPS = [
   '儿童组1(4-6岁)', '儿童组2(7-9岁)', '儿童组3(10-12岁)',
@@ -375,12 +451,18 @@ function lookupWeights(table: Record<string, string[]>, ageGroup: string, gender
 const editBeltOptions = computed(() => {
   const ag = editForm.age_group
   if (!ag) return [...CHILDREN_BELTS, ...ADULT_BELTS]
-  if (CHILDREN_GROUPS.includes(ag) || ag === YOUTH_GROUP) return CHILDREN_BELTS
+  if (CHILDREN_GROUPS.includes(ag)) return CHILDREN_BELTS
+  // 16-17岁 和 成人/大师 都用成人带色
   return ADULT_BELTS
 })
 
 const editGiWeightOptions = computed(() => lookupWeights(GI_WEIGHTS, editForm.age_group, editForm.gender))
 const editNogiWeightOptions = computed(() => lookupWeights(NOGI_WEIGHTS, editForm.age_group, editForm.gender))
+
+function onSiteChange(siteId: number) {
+  const site = siteOptions.value.find((s: any) => s.id === siteId)
+  editForm.site_name = site ? site.label : ''
+}
 
 function onAgeGroupChange() {
   // 年龄组别变更时，重置带色和体重（因为选项列表变了）
@@ -424,20 +506,38 @@ const query = reactive({
   keyword: '',
   pay_status: '',
   confirm_status: '',
-  age_group: ''
+  age_group: '',
+  site_id: '' as any,
+  date_range: null as string[] | null,
 })
+
+// ── 赛事站点选项 ────────────────────────────────────
+const siteOptions = ref<any[]>([])
+async function fetchSites() {
+  try {
+    const res: any = await getDictItems('competition_site')
+    siteOptions.value = res.data?.data || res.data || []
+  } catch { /* ignore */ }
+}
 
 async function fetchList() {
   loading.value = true
   try {
-    const res: any = await getRegistrationList(query)
+    const params: any = { ...query }
+    // 拆分日期范围
+    if (params.date_range && params.date_range.length === 2) {
+      params.date_start = params.date_range[0]
+      params.date_end = params.date_range[1]
+    }
+    delete params.date_range
+    const res: any = await getRegistrationList(params)
     list.value = res.data?.data || []
     total.value = res.data?.total || 0
   } finally {
     loading.value = false
   }
 }
-onMounted(fetchList)
+onMounted(() => { fetchList(); fetchSites() })
 
 // ── 状态 ─────────────────────────────────────────
 function payStatusLabel(s: string) {
@@ -511,13 +611,17 @@ const editDialogVisible = ref(false)
 const editLoading = ref(false)
 const editingId = ref<number>(0)
 const editForm = reactive({
+  site_id: null as number | null,
+  site_name: '',
   name_cn: '',
   name_pinyin: '',
   gender: '',
   birthday: '',
   phone: '',
   email: '',
+  id_type: 'id_card',
   id_card: '',
+  passport_no: '',
   nationality: '',
   age_group: '',
   belt_color: '',
@@ -530,13 +634,17 @@ const editForm = reactive({
 
 function handleEdit(row: any) {
   editingId.value = row.id
+  editForm.site_id = row.site_id || null
+  editForm.site_name = row.site_name || ''
   editForm.name_cn = row.name_cn || ''
   editForm.name_pinyin = row.name_pinyin || ''
   editForm.gender = row.gender || ''
   editForm.birthday = row.birthday || ''
   editForm.phone = row.phone || ''
   editForm.email = row.email || ''
+  editForm.id_type = row.id_type || 'id_card'
   editForm.id_card = row.id_card || ''
+  editForm.passport_no = row.passport_no || ''
   editForm.nationality = row.nationality || ''
   editForm.age_group = row.age_group || ''
   editForm.belt_color = row.belt_color || ''
@@ -585,19 +693,44 @@ async function handleDelete(row: any) {
 }
 
 // ── 导出 ─────────────────────────────────────────
-async function handleExportCommand(command: string) {
+const exportDialogVisible = ref(false)
+const exportLoading = ref(false)
+const exportForm = reactive({
+  scope: 'confirmed' as 'confirmed' | 'all',
+  date_range: null as string[] | null,
+  site_id: '' as any,
+})
+
+function openExportDialog() {
+  exportForm.scope = 'confirmed'
+  exportForm.date_range = null
+  exportForm.site_id = ''
+  exportDialogVisible.value = true
+}
+
+async function handleExport() {
+  exportLoading.value = true
   try {
-    const isAll = command === 'all'
-    const res: any = await exportRegistrations(isAll)
+    const params: any = {}
+    if (exportForm.scope === 'all') params.all = 1
+    if (exportForm.date_range && exportForm.date_range.length === 2) {
+      params.date_start = exportForm.date_range[0]
+      params.date_end = exportForm.date_range[1]
+    }
+    if (exportForm.site_id) params.site_id = exportForm.site_id
+    const res: any = await exportRegistrations(params)
     const url = URL.createObjectURL(new Blob([res], { type: 'text/csv;charset=utf-8' }))
     const a = document.createElement('a')
     a.href = url
-    a.download = `registrations_${isAll ? 'all' : 'confirmed'}_${Date.now()}.csv`
+    a.download = `registrations_${exportForm.scope}_${Date.now()}.csv`
     a.click()
     URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
+    exportDialogVisible.value = false
   } catch {
     ElMessage.error('导出失败')
+  } finally {
+    exportLoading.value = false
   }
 }
 </script>

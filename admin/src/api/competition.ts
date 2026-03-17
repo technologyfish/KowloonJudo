@@ -33,10 +33,10 @@ export const getRegistrationList = (params?: any) =>
 export const getRegistrationDetail = (id: number) =>
   request.get(`/admin/competition/registrations/${id}`)
 
-/** 导出报名数据 CSV（默认仅已确认，all=1导出全部） */
-export const exportRegistrations = (all = false) =>
+/** 导出报名数据 CSV（支持筛选参数） */
+export const exportRegistrations = (params?: any) =>
   request.get('/admin/competition/registrations/export', {
-    params: all ? { all: 1 } : {},
+    params: params || {},
     responseType: 'blob',
   })
 
@@ -67,3 +67,11 @@ export const getFeeSettings = () =>
 /** 更新费用设置 */
 export const updateFeeSettings = (data: { category_fee: number; open_weight_fee: number }) =>
   request.put('/admin/settings/fees', data)
+
+/** 账单统计概览 */
+export const getBillStats = (params?: any) =>
+  request.get('/admin/bill/stats', { params })
+
+/** 账单订单明细 */
+export const getBillOrders = (params?: any) =>
+  request.get('/admin/bill/orders', { params })

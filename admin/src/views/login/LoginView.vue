@@ -10,8 +10,8 @@
         </svg>
       </div>
 
-      <h1 class="login-title">KowloonJudo</h1>
-      <p class="login-subtitle">九龙柔道后台管理系统</p>
+      <h1 class="login-title">COPA DE CHN</h1>
+      <p class="login-subtitle">COPA DE CHN 后台管理系统</p>
 
       <el-form
         ref="formRef"
@@ -52,7 +52,7 @@
         </el-form-item>
       </el-form>
 
-      <p class="login-footer">© 2025 KowloonJudo · All rights reserved</p>
+      <p class="login-footer">© 2025 COPA DE CHN · All rights reserved</p>
       <p class="login-beian">
         备案号：<a href="http://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">桂ICP备2026003766号-1</a>
       </p>
