@@ -11,7 +11,9 @@ export const useRegistrationStore = defineStore('registration', () => {
     email: '',           // 邮箱
     nationality: '',     // 国籍
     gender: '',          // 性别
+    id_type: 'id_card',  // 证件类型：id_card=身份证, passport=护照
     id_card: '',         // 身份证号码
+    passport_no: '',     // 护照号码
     birthday: '',        // 出生年月日
     age_group: '',       // 年龄组别
     belt_color: '',      // 带色
@@ -44,7 +46,7 @@ export const useRegistrationStore = defineStore('registration', () => {
     formData.value = {
       site_id: null,
       name_pinyin: '', name_cn: '', phone: '', email: '',
-      nationality: '', gender: '', id_card: '', birthday: '',
+      nationality: '', gender: '', id_type: 'id_card', id_card: '', passport_no: '', birthday: '',
       age_group: '', belt_color: '',
       weight_gi: '', gi_open: false,
       weight_nogi: '', nogi_open: false,

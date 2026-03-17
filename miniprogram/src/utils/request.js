@@ -5,7 +5,7 @@ import { useUserStore } from '@/store/user'
 
 export const BASE_URL = 'https://copade.net.cn/api'
 
-// export const BASE_URL = 'http://127.0.0.1:8000/api'
+//export const BASE_URL = 'http://localhost:8000/api'
 /**
  * 发起请求
  * @param {object} options

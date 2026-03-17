@@ -102,52 +102,23 @@
         <el-table-column prop="phone" label="手机号" width="130" />
 
         <el-table-column prop="created_at" label="报名时间" width="200" :formatter="formatTime" />
-        <el-table-column label="操作" width="280" fixed="right" align="center">
+        <el-table-column label="操作" width="180" fixed="right" align="center">
           <template #default="{ row }">
             <div class="action-btns">
-              <el-button
-                type="primary"
-                size="small"
-                plain
-                @click="handleEdit(row)"
-              >
-                修改
-              </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                plain
-                @click="handleDelete(row)"
-              >
-                删除
-              </el-button>
+              <el-button type="primary" size="small" plain @click="handleEdit(row)">修改</el-button>
+              <el-button type="danger" size="small" plain @click="handleDelete(row)">删除</el-button>
               <el-button
                 v-if="row.pay_status === 'paid' && row.confirm_status !== 'confirmed'"
-                type="success"
-                size="small"
-                plain
-                @click="handleAudit(row)"
-              >
-                人工通过
-              </el-button>
+                type="success" size="small" plain @click="handleAudit(row)"
+              >通过</el-button>
               <el-button
                 v-if="row.pay_status === 'paid' && row.confirm_status === 'confirmed'"
-                type="info"
-                size="small"
-                plain
-                @click="handleCancelAudit(row)"
-              >
-                取消通过
-              </el-button>
+                type="info" size="small" plain @click="handleCancelAudit(row)"
+              >取消</el-button>
               <el-button
                 v-if="row.pay_status === 'paid' || row.pay_status === 'refund_pending'"
-                type="warning"
-                size="small"
-                plain
-                @click="handleRefund(row)"
-              >
-                退款
-              </el-button>
+                type="warning" size="small" plain @click="handleRefund(row)"
+              >退款</el-button>
             </div>
           </template>
         </el-table-column>
@@ -749,5 +720,17 @@ async function handleExport() {
 .toolbar-right { display: flex; gap: 10px; align-items: center; }
 .mt-16 { margin-top: 16px; }
 .pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
-.action-btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.action-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 6px;
+  padding: 4px 0;
+}
+.action-btns .el-button {
+  margin: 0;
+}
+/* 奇数个按钮时，最后一个左对齐 */
+.action-btns .el-button:last-child:nth-child(odd) {
+  justify-self: start;
+}
 </style>

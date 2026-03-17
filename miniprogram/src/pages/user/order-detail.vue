@@ -41,6 +41,14 @@
           <text class="info-key">带色</text>
           <text class="info-val">{{ order.belt_color }}</text>
         </view>
+        <view class="info-row">
+          <text class="info-key">证件类型</text>
+          <text class="info-val">{{ (order.id_type || 'id_card') === 'passport' ? '护照' : '身份证' }}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-key">证件号码</text>
+          <text class="info-val">{{ (order.id_type || 'id_card') === 'passport' ? (order.passport_no || '-') : (order.id_card || '-') }}</text>
+        </view>
         <view v-if="order.weight_gi" class="info-row">
           <text class="info-key">体重（道服）</text>
           <text class="info-val">{{ order.weight_gi }}</text>

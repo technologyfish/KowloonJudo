@@ -100,11 +100,31 @@
         <text v-if="formErrors.gender" class="field-error">{{ formErrors.gender }}</text>
       </view>
 
+      <!-- 证件类型 -->
+      <view class="form-item" id="field-id_type">
+        <text class="label">证件类型 <text class="required">*</text></text>
+        <picker class="picker" :range="idTypeLabels" @change="onIdTypeChange">
+          <view class="picker-view">
+            <text :class="form.id_type ? 'picker-val' : 'picker-placeholder'">
+              {{ form.id_type === 'passport' ? '护照' : '身份证' }}
+            </text>
+            <text class="picker-arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+
       <!-- 身份证号码 -->
-      <view class="form-item" id="field-id_card">
+      <view v-if="form.id_type !== 'passport'" class="form-item" id="field-id_card">
         <text class="label">身份证号码 <text class="required">*</text></text>
         <input class="input" v-model="form.id_card" placeholder="请输入身份证号码" @blur="validateField('id_card')" />
         <text v-if="formErrors.id_card" class="field-error">{{ formErrors.id_card }}</text>
+      </view>
+
+      <!-- 护照号码 -->
+      <view v-if="form.id_type === 'passport'" class="form-item" id="field-passport">
+        <text class="label">护照号码 <text class="required">*</text></text>
+        <input class="input" v-model="form.passport_no" placeholder="请输入护照号码" @input="formErrors.passport_no = ''" />
+        <text v-if="formErrors.passport_no" class="field-error">{{ formErrors.passport_no }}</text>
       </view>
 
       <!-- 出生年月日 -->
@@ -387,12 +407,30 @@ const formErrors = reactive({
   nationality: '',
   gender: '',
   id_card: '',
+  passport_no: '',
   birthday: '',
   age_group: '',
   belt_color: '',
   weight: '',
   team: '',
 })
+
+// ─── 证件类型 ──────────────────────────────────────────────
+const idTypeOptions = ['id_card', 'passport']
+const idTypeLabels = ['身份证', '护照']
+
+function onIdTypeChange(e) {
+  const idx = Number(e.detail.value)
+  form.value.id_type = idTypeOptions[idx]
+  // 切换证件类型时清空另一种证件号码和错误提示
+  if (form.value.id_type === 'passport') {
+    form.value.id_card = ''
+    formErrors.id_card = ''
+  } else {
+    form.value.passport_no = ''
+    formErrors.passport_no = ''
+  }
+}
 
 const genderOptions = ['男', '女']
 
@@ -521,6 +559,7 @@ function validateField(field) {
     return true
   }
   if (field === 'id_card') {
+    if (form.value.id_type === 'passport') return true // 护照模式下不校验身份证
     if (!v) { formErrors.id_card = '请填写身份证号码'; return false }
     if (!IDCARD_RE.test(v)) { formErrors.id_card = '身份证号格式不正确'; return false }
     formErrors.id_card = ''
@@ -550,12 +589,24 @@ function validate() {
   }
 
   // 必填项检查（一次性收集所有错误）
+  // 证件号码检查
+  if (form.value.id_type === 'passport') {
+    if (!String(form.value.passport_no || '').trim()) {
+      formErrors.passport_no = '请填写护照号码'
+      if (!firstError) firstError = 'passport'
+    }
+  } else {
+    if (!String(form.value.id_card || '').trim()) {
+      formErrors.id_card = '请填写身份证号码'
+      if (!firstError) firstError = 'id_card'
+    }
+  }
+
   const requiredFields = [
     { field: 'phone',       msg: '请填写手机号码' },
     { field: 'email',       msg: '请填写邮箱' },
     { field: 'nationality', msg: '请填写国籍' },
     { field: 'gender',      msg: '请选择性别' },
-    { field: 'id_card',     msg: '请填写身份证号码' },
     { field: 'birthday',    msg: '请选择出生年月日' },
     { field: 'age_group',   msg: '请选择年龄组别' },
     { field: 'belt_color',  msg: '请选择带色' },
@@ -579,10 +630,12 @@ function validate() {
     formErrors.email = '邮箱格式不正确'
     if (!firstError) firstError = 'email'
   }
-  const v_idcard = String(form.value.id_card || '').trim()
-  if (v_idcard && !IDCARD_RE.test(v_idcard)) {
-    formErrors.id_card = '身份证号格式不正确'
-    if (!firstError) firstError = 'id_card'
+  if (form.value.id_type !== 'passport') {
+    const v_idcard = String(form.value.id_card || '').trim()
+    if (v_idcard && !IDCARD_RE.test(v_idcard)) {
+      formErrors.id_card = '身份证号格式不正确'
+      if (!firstError) firstError = 'id_card'
+    }
   }
 
   // 至少选一种体重组别

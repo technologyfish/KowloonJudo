@@ -198,7 +198,8 @@ function goToMe(msg) {
   font-weight: 500;
   letter-spacing: 2rpx;
   border: none;
-  box-shadow: 0 8rpx 24rpx rgba(7,193,96,0.35);
+  box-shadow: none;
+  &::after { border: none; }
 }
 
 /* ── 隐私声明 ── */

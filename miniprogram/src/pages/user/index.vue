@@ -54,6 +54,18 @@
       <text class="entry-arrow">›</text>
     </view>
 
+    <!-- ══ 联系客服入口 ══════════════════════════════════════════ -->
+    <view class="section-card kefu-card">
+      <image class="kefu-avatar-img" src="https://copade.net.cn/wx.png" mode="aspectFill" />
+      <view class="kefu-info">
+        <text class="kefu-name">COPA DE CHN客服</text>
+        <text class="kefu-desc">微信号: {{ wechatId }}</text>
+      </view>
+      <view class="kefu-copy-btn" hover-class="kefu-copy-btn-hover" @click="copyWechat">
+        <text class="kefu-copy-text">复制微信号</text>
+      </view>
+    </view>
+
     <!-- ══ 我的订单（内嵌列表）══════════════════════════════════ -->
     <view class="section-card order-section">
       <view class="section-header">
@@ -132,6 +144,7 @@ const userStore       = useUserStore()
 const statusBarHeight = ref(uni.getSystemInfoSync().statusBarHeight || 20)
 const notice          = ref('')
 const avatarUploading = ref(false)
+const wechatId        = '-COPA-DE-CHN-'
 
 // 公告滚动动画时长（字数×0.3s，最短8s）
 const noticeTrackStyle = computed(() => {
@@ -288,6 +301,54 @@ function uploadAvatarFile(filePath) {
       }
     })
   })
+}
+
+// ── 复制客服微信号 ──────────────────────────────────────────
+function copyWechat() {
+  const text = String(wechatId)
+
+  // #ifdef MP-WEIXIN
+  // 微信小程序需要先通过隐私授权才能使用剪贴板
+  if (typeof wx !== 'undefined' && typeof wx.requirePrivacyAuthorize === 'function') {
+    wx.requirePrivacyAuthorize({
+      success() {
+        wx.setClipboardData({
+          data: text,
+          success() { /* 微信自动弹出"内容已复制" */ },
+          fail(err) {
+            console.error('复制失败', err)
+            uni.showToast({ title: '复制失败，请手动复制: ' + text, icon: 'none', duration: 3000 })
+          },
+        })
+      },
+      fail() {
+        // 用户拒绝隐私协议，提示手动复制
+        uni.showToast({ title: '请手动复制微信号: ' + text, icon: 'none', duration: 3000 })
+      },
+    })
+  } else {
+    // 旧版本基础库，直接调用
+    wx.setClipboardData({
+      data: text,
+      success() { },
+      fail() {
+        uni.showToast({ title: '请手动复制微信号: ' + text, icon: 'none', duration: 3000 })
+      },
+    })
+  }
+  // #endif
+
+  // #ifndef MP-WEIXIN
+  uni.setClipboardData({
+    data: text,
+    success() {
+      uni.showToast({ title: '复制成功', icon: 'success', duration: 1500 })
+    },
+    fail() {
+      uni.showToast({ title: '请手动复制微信号: ' + text, icon: 'none', duration: 3000 })
+    },
+  })
+  // #endif
 }
 
 // ── 跳转 ────────────────────────────────────────────────────
@@ -468,6 +529,52 @@ function statusClass(s) {
 }
 .entry-label { flex: 1; font-size: 30rpx; color: #333; }
 .entry-arrow { font-size: 36rpx; color: #ccc; }
+
+/* ══ 客服卡片 ══ */
+.kefu-card {
+  display: flex;
+  align-items: center;
+  padding: 28rpx;
+  gap: 20rpx;
+}
+.kefu-avatar-img {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
+  flex-shrink: 0;
+}
+.kefu-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.kefu-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+.kefu-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+.kefu-copy-btn {
+  background: #e74c3c;
+  border-radius: 32rpx;
+  padding: 14rpx 32rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kefu-copy-btn-hover {
+  opacity: 0.7;
+}
+.kefu-copy-text {
+  font-size: 24rpx;
+  color: #fff;
+  white-space: nowrap;
+}
 
 /* ══ 订单 Tab ══ */
 .order-section {
