@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CompetitionRule;
+use App\Models\DictItem;
 use App\Models\Registration;
 use App\Models\Setting;
 use App\Services\WechatPayService;
@@ -61,9 +62,14 @@ class CompetitionController extends Controller
     public function register(Request $request)
     {
         $rules = [
+            'site_id'      => 'required|integer|exists:dict_items,id',
+            'name_pinyin'  => 'sometimes|nullable|string|max:100',
+            'name_cn'      => 'sometimes|nullable|string|max:50',
             'nationality'  => 'required|string|max:50',
             'gender'       => 'required|string',
-            'id_card'      => 'required|string|max:30',
+            'id_type'      => 'required|string|in:id_card,passport',
+            'id_card'      => 'sometimes|nullable|string|max:30',
+            'passport_no'  => 'sometimes|nullable|string|max:50',
             'birthday'     => 'required|date_format:Y-m-d',
             'age_group'    => 'required|string|max:50',
             'belt_color'   => 'required|string|max:20',
@@ -77,6 +83,22 @@ class CompetitionController extends Controller
         ];
 
         $this->validate($request, $rules);
+
+        // 姓名（拼音）和姓名（汉字）至少填一个
+        $namePinyin = trim($request->input('name_pinyin', ''));
+        $nameCn     = trim($request->input('name_cn', ''));
+        if ($namePinyin === '' && $nameCn === '') {
+            return $this->error('姓名（拼音）和姓名（汉字）至少填写一项', 422);
+        }
+
+        // 验证证件号码
+        $idType = $request->input('id_type', 'id_card');
+        if ($idType === 'id_card' && empty(trim($request->input('id_card', '')))) {
+            return $this->error('请填写身份证号码', 422);
+        }
+        if ($idType === 'passport' && empty(trim($request->input('passport_no', '')))) {
+            return $this->error('请填写护照号码', 422);
+        }
 
         // 验证性别
         $gender = $request->input('gender');
@@ -171,16 +193,24 @@ class CompetitionController extends Controller
         $user      = JWTAuth::parseToken()->authenticate();
         $genderNum = $gender === '男' ? 1 : 2;
 
+        // 获取赛事站点信息（从字典表）
+        $siteId   = $request->input('site_id');
+        $site     = DictItem::findOrFail($siteId);
+
         $orderNo = Registration::generateOrderNo();
 
         $reg = Registration::create([
             'user_id'       => $user->id,
+            'site_id'       => $site->id,
+            'site_name'     => $site->label,
             'order_no'      => $orderNo,
             'name_pinyin'   => $request->input('name_pinyin', ''),
             'name_cn'       => $request->input('name_cn', ''),
             'nationality'   => $request->input('nationality'),
             'gender'        => $genderNum,
-            'id_card'       => $request->input('id_card'),
+            'id_type'       => $idType,
+            'id_card'       => $request->input('id_card', ''),
+            'passport_no'   => $request->input('passport_no', ''),
             'birthday'      => $birthday,
             'age_group'     => $ageGroup,
             'belt_color'    => $request->input('belt_color'),
@@ -416,12 +446,16 @@ class CompetitionController extends Controller
         return $this->success([
             'id'            => $r->id,
             'order_no'      => $r->order_no,
+            'site_id'       => $r->site_id,
+            'site_name'     => $r->site_name,
             'name_pinyin'   => $r->name_pinyin,
             'name_cn'       => $r->name_cn,
             'gender'        => $r->gender_text,
             'birthday'      => $r->birthday ? $r->birthday->format('Y-m-d') : null,
             'nationality'   => $r->nationality,
+            'id_type'       => $r->id_type ?? 'id_card',
             'id_card'       => $r->id_card,
+            'passport_no'   => $r->passport_no ?? '',
             'age_group'     => $r->age_group,
             'belt_color'    => $r->belt_color,
             'weight_gi'     => $r->weight_gi,
@@ -467,6 +501,8 @@ class CompetitionController extends Controller
                 return [
                     'id'            => $r->id,
                     'order_no'      => $r->order_no,
+                    'site_id'       => $r->site_id,
+                    'site_name'     => $r->site_name,
                     'name_pinyin'   => $r->name_pinyin,
                     'name_cn'       => $r->name_cn,
                     'gender'        => $r->gender_text,

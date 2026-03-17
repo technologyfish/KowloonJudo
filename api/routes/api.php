@@ -4,7 +4,7 @@
 
 // 健康检查
 $router->get('/', function () {
-    return response()->json(['message' => 'KowloonJudo API', 'version' => '1.0.0']);
+    return response()->json(['message' => 'COPA DE CHN API', 'version' => '1.0.0']);
 });
 
 /*
@@ -31,6 +31,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     // 费用设置（公开，前端需读取）
     $router->get('/settings/fees', 'Admin\FeeSettingController@publicIndex');
+
+    // 字典数据（公开，小程序下拉框等需读取）
+    $router->get('/dict/items', 'DictController@publicItems');
 });
 
 /*
@@ -96,9 +99,25 @@ $router->group(['prefix' => 'api/admin', 'middleware' => 'admin-jwt'], function 
     $router->put('/competition/registrations/{id}',          'Admin\CompetitionRuleController@registrationUpdate');
     $router->delete('/competition/registrations/{id}',       'Admin\CompetitionRuleController@registrationDestroy');
 
+    // 账单统计
+    $router->get('/bill/stats',   'Admin\BillController@stats');
+    $router->get('/bill/orders',  'Admin\BillController@orders');
+
     // 费用设置
     $router->get('/settings/fees',  'Admin\FeeSettingController@index');
     $router->put('/settings/fees',  'Admin\FeeSettingController@update');
+
+    // 字典管理 - 字典类型
+    $router->get('/dict/types',          'Admin\DictController@typeIndex');
+    $router->post('/dict/types',         'Admin\DictController@typeStore');
+    $router->put('/dict/types/{id}',     'Admin\DictController@typeUpdate');
+    $router->delete('/dict/types/{id}',  'Admin\DictController@typeDestroy');
+
+    // 字典管理 - 字典数据项
+    $router->get('/dict/items',          'Admin\DictController@itemIndex');
+    $router->post('/dict/items',         'Admin\DictController@itemStore');
+    $router->put('/dict/items/{id}',     'Admin\DictController@itemUpdate');
+    $router->delete('/dict/items/{id}',  'Admin\DictController@itemDestroy');
 
     // 公告管理 CRUD
     $router->get('/announcements',        'Admin\AnnouncementController@index');

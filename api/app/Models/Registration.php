@@ -9,8 +9,9 @@ class Registration extends Model
     protected $table = 'registrations';
 
     protected $fillable = [
-        'user_id', 'order_no', 'name_pinyin', 'name_cn', 'nationality',
-        'gender', 'id_card', 'birthday', 'age_group', 'belt_color',
+        'user_id', 'site_id', 'site_name',
+        'order_no', 'name_pinyin', 'name_cn', 'nationality',
+        'gender', 'id_card', 'id_type', 'passport_no', 'birthday', 'age_group', 'belt_color',
         'weight_gi', 'weight_nogi', 'gi_open', 'nogi_open',
         'team', 'phone', 'email',
         'package_key', 'package_label', 'amount',
@@ -48,5 +49,10 @@ class Registration extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function site()
+    {
+        return $this->belongsTo(DictItem::class, 'site_id');
     }
 }

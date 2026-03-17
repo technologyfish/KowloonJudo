@@ -2,7 +2,7 @@
 --  KowloonJudo 数据库初始化脚本
 --  字符集: utf8mb4 / 排序规则: utf8mb4_unicode_ci
 --  适用数据库: MySQL 5.7+ / MariaDB 10.3+
---  生成时间: 2026-03-01
+--  生成时间: 2026-03-15
 -- ============================================================
 
 SET NAMES utf8mb4;
@@ -84,18 +84,58 @@ CREATE TABLE `competition_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='比赛规则表';
 
 -- ============================================================
---  5. registrations  （报名 & 订单表）
+--  5. dict_types  （字典类型表）
+-- ============================================================
+DROP TABLE IF EXISTS `dict_types`;
+CREATE TABLE `dict_types` (
+  `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT   COMMENT '主键',
+  `code`       VARCHAR(50)     NOT NULL                  COMMENT '字典编码（唯一标识）',
+  `name`       VARCHAR(100)    NOT NULL                  COMMENT '字典名称',
+  `status`     TINYINT         NOT NULL DEFAULT 1        COMMENT '状态: 1=启用 0=禁用',
+  `remark`     VARCHAR(255)    NOT NULL DEFAULT ''       COMMENT '备注',
+  `created_at` TIMESTAMP       NULL     DEFAULT NULL,
+  `updated_at` TIMESTAMP       NULL     DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `dict_types_code_unique` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典类型表';
+
+-- ============================================================
+--  6. dict_items  （字典数据项表）
+-- ============================================================
+DROP TABLE IF EXISTS `dict_items`;
+CREATE TABLE `dict_items` (
+  `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT   COMMENT '主键',
+  `type_code`  VARCHAR(50)     NOT NULL                  COMMENT '所属字典类型编码',
+  `label`      VARCHAR(100)    NOT NULL                  COMMENT '显示标签',
+  `value`      VARCHAR(100)    NOT NULL                  COMMENT '存储值',
+  `sort`       INT             NOT NULL DEFAULT 0        COMMENT '排序（越小越靠前）',
+  `status`     TINYINT         NOT NULL DEFAULT 1        COMMENT '状态: 1=启用 0=禁用',
+  `remark`     VARCHAR(255)    NOT NULL DEFAULT ''       COMMENT '备注',
+  `created_at` TIMESTAMP       NULL     DEFAULT NULL,
+  `updated_at` TIMESTAMP       NULL     DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_type_code` (`type_code`),
+  CONSTRAINT `fk_dict_items_type` FOREIGN KEY (`type_code`) REFERENCES `dict_types` (`code`)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典数据项表';
+
+-- ============================================================
+--  7. registrations  （报名 & 订单表）
 -- ============================================================
 DROP TABLE IF EXISTS `registrations`;
 CREATE TABLE `registrations` (
   `id`                 BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT  COMMENT '主键 / 订单号',
   `user_id`            BIGINT UNSIGNED  NOT NULL                 COMMENT '用户 ID',
+  `site_id`            BIGINT UNSIGNED  NULL     DEFAULT NULL     COMMENT '赛事站点（字典项 ID）',
+  `site_name`          VARCHAR(100)     NULL     DEFAULT NULL     COMMENT '赛事站点名称(冗余)',
   -- 选手信息
   `name_pinyin`        VARCHAR(100)     NOT NULL DEFAULT ''      COMMENT '姓名（拼音）',
   `name_cn`            VARCHAR(50)      NOT NULL DEFAULT ''      COMMENT '姓名（汉字）',
   `nationality`        VARCHAR(50)      NOT NULL                 COMMENT '国籍',
   `gender`             TINYINT          NOT NULL                 COMMENT '性别：1男 2女',
-  `id_card`            VARCHAR(30)      NOT NULL                 COMMENT '身份证号码',
+  `id_type`            VARCHAR(20)      NOT NULL DEFAULT 'id_card' COMMENT '证件类型: id_card身份证, passport护照',
+  `id_card`            VARCHAR(30)      NOT NULL DEFAULT ''       COMMENT '身份证号码',
+  `passport_no`        VARCHAR(30)      NULL     DEFAULT NULL     COMMENT '护照号码',
   `birthday`           DATE             NULL     DEFAULT NULL     COMMENT '出生年月日',
   `age_group`          VARCHAR(50)      NOT NULL                 COMMENT '年龄组别',
   `belt_color`         VARCHAR(20)      NOT NULL                 COMMENT '带色',
@@ -107,6 +147,7 @@ CREATE TABLE `registrations` (
   `phone`              VARCHAR(20)      NOT NULL                 COMMENT '手机号',
   `email`              VARCHAR(100)     NOT NULL                 COMMENT '邮箱',
   -- 套餐 & 支付
+  `order_no`           VARCHAR(20)      NOT NULL DEFAULT ''      COMMENT '13位订单号',
   `package_key`        VARCHAR(30)      NULL     DEFAULT NULL     COMMENT '套餐 key（兼容旧数据）',
   `package_label`      VARCHAR(80)      NULL     DEFAULT NULL     COMMENT '套餐名称',
   `amount`             DECIMAL(8,2)     NOT NULL DEFAULT 0.00    COMMENT '应付金额（元）',
@@ -119,6 +160,7 @@ CREATE TABLE `registrations` (
   `created_at`         TIMESTAMP        NULL     DEFAULT NULL,
   `updated_at`         TIMESTAMP        NULL     DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `registrations_order_no_unique` (`order_no`),
   KEY `idx_user_pay` (`user_id`, `pay_status`),
   CONSTRAINT `fk_reg_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报名订单表';
@@ -135,7 +177,12 @@ INSERT INTO `migrations` (`migration`, `batch`) VALUES
   ('2024_01_01_000004_create_registrations_table',    1),
   ('2024_01_01_000010_add_birthday_to_registrations', 2),
   ('2024_01_01_000011_add_confirm_status_and_refunded', 2),
-  ('2024_01_01_000013_add_refund_pending_to_pay_status', 3);
+  ('2024_01_01_000012_add_order_no_to_registrations', 2),
+  ('2024_01_01_000013_add_refund_pending_to_pay_status', 3),
+  ('2024_01_01_000014_create_competition_sites_table', 4),
+  ('2024_01_01_000015_add_site_id_to_registrations', 4),
+  ('2024_01_01_000016_create_dict_tables', 5),
+  ('2024_01_01_000017_add_id_type_and_passport_to_registrations', 6);
 
 -- 超级管理员（密码：Admin@123456）
 INSERT INTO `admins` (`name`, `email`, `password`, `role`, `avatar`, `status`, `created_at`, `updated_at`)
@@ -179,6 +226,14 @@ VALUES (
   NOW(),
   NOW()
 );
+
+-- 字典类型：赛事站点
+INSERT INTO `dict_types` (`code`, `name`, `status`, `remark`, `created_at`, `updated_at`)
+VALUES ('competition_site', '赛事站点', 1, '比赛报名可选的赛事站点', NOW(), NOW());
+
+-- 字典值示例：赛事站点
+INSERT INTO `dict_items` (`type_code`, `label`, `value`, `sort`, `status`, `remark`, `created_at`, `updated_at`)
+VALUES ('competition_site', 'copa de chn南宁站', 'copa de chn南宁站', 0, 1, '', NOW(), NOW());
 
 -- ------------------------------------------------------------
 -- 费用设置表

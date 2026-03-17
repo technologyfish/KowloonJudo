@@ -101,6 +101,9 @@ class CompetitionRuleController extends Controller
         $payStatus     = $request->input('pay_status');
         $confirmStatus = $request->input('confirm_status');
         $ageGroup      = $request->input('age_group');
+        $siteId        = $request->input('site_id');
+        $dateStart     = $request->input('date_start');
+        $dateEnd       = $request->input('date_end');
         $pageSize      = (int) $request->input('pageSize', 20);
 
         $query = Registration::with('user')->orderByDesc('id');
@@ -117,6 +120,9 @@ class CompetitionRuleController extends Controller
         if ($payStatus)     $query->where('pay_status', $payStatus);
         if ($confirmStatus) $query->where('confirm_status', $confirmStatus);
         if ($ageGroup)      $query->where('age_group', $ageGroup);
+        if ($siteId)        $query->where('site_id', $siteId);
+        if ($dateStart)     $query->whereDate('created_at', '>=', $dateStart);
+        if ($dateEnd)       $query->whereDate('created_at', '<=', $dateEnd);
 
         $paginator = $query->paginate($pageSize);
 
@@ -124,11 +130,15 @@ class CompetitionRuleController extends Controller
         $items = collect($paginator->items())->map(fn($r) => [
             'id'             => $r->id,
             'order_no'       => $r->order_no,
+            'site_id'        => $r->site_id,
+            'site_name'      => $r->site_name,
             'name_cn'        => $r->name_cn,
             'name_pinyin'    => $r->name_pinyin,
             'nationality'    => $r->nationality,
             'gender'         => $r->gender == 1 ? '男' : '女',
+            'id_type'        => $r->id_type ?? 'id_card',
             'id_card'        => $r->id_card,
+            'passport_no'    => $r->passport_no ?? '',
             'birthday'       => $r->birthday ? $r->birthday->format('Y-m-d') : null,
             'age_group'      => $r->age_group,
             'belt_color'     => $r->belt_color,
@@ -169,9 +179,22 @@ class CompetitionRuleController extends Controller
             $query->where('confirm_status', 'confirmed');
         }
 
+        // 时间周期筛选
+        if ($request->input('date_start')) {
+            $query->whereDate('created_at', '>=', $request->input('date_start'));
+        }
+        if ($request->input('date_end')) {
+            $query->whereDate('created_at', '<=', $request->input('date_end'));
+        }
+
+        // 赛事站点筛选
+        if ($request->input('site_id')) {
+            $query->where('site_id', $request->input('site_id'));
+        }
+
         $regs = $query->get();
 
-        $headers = ['ID','订单号','姓名(汉字)','姓名(拼音)','国籍','性别','出生日期','年龄组别','带色',
+        $headers = ['ID','订单号','赛事站点','姓名(汉字)','姓名(拼音)','国籍','性别','证件类型','证件号码','出生日期','年龄组别','带色',
                     '体重(道服)','道服无差','体重(无道服)','无道服无差','战队','手机号','邮箱',
                     '套餐','金额','支付状态','审核状态','报名时间'];
 
@@ -181,10 +204,13 @@ class CompetitionRuleController extends Controller
         $rows = $regs->map(fn($r) => [
             $r->id,
             (string) ($r->order_no ?? ''),
+            (string) ($r->site_name ?? ''),
             (string) ($r->name_cn ?? ''),
             (string) ($r->name_pinyin ?? ''),
             (string) ($r->nationality ?? ''),
             $r->gender == 1 ? '男' : '女',
+            ($r->id_type ?? 'id_card') === 'passport' ? '护照' : '身份证',
+            ($r->id_type ?? 'id_card') === 'passport' ? (string) ($r->passport_no ?? '') : (string) ($r->id_card ?? ''),
             $r->birthday ? $r->birthday->format('Y-m-d') : '',
             (string) ($r->age_group ?? ''),
             (string) ($r->belt_color ?? ''),
@@ -313,7 +339,9 @@ class CompetitionRuleController extends Controller
             'name_pinyin'  => 'sometimes|string|max:100',
             'nationality'  => 'sometimes|string|max:50',
             'gender'       => 'sometimes|string',
-            'id_card'      => 'sometimes|string|max:30',
+            'id_type'      => 'sometimes|string|in:id_card,passport',
+            'id_card'      => 'sometimes|nullable|string|max:30',
+            'passport_no'  => 'sometimes|nullable|string|max:50',
             'birthday'     => 'sometimes|nullable|date',
             'age_group'    => 'sometimes|string|max:50',
             'belt_color'   => 'sometimes|string|max:20',
@@ -329,7 +357,8 @@ class CompetitionRuleController extends Controller
         ]);
 
         $data = $request->only([
-            'name_cn', 'name_pinyin', 'nationality', 'id_card',
+            'site_id', 'site_name',
+            'name_cn', 'name_pinyin', 'nationality', 'id_type', 'id_card', 'passport_no',
             'birthday', 'age_group', 'belt_color',
             'weight_gi', 'weight_nogi', 'gi_open', 'nogi_open',
             'team', 'phone', 'email',
