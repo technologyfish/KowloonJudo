@@ -8,7 +8,7 @@
       <view class="section">
         <view class="heading">引言</view>
         <view class="para">
-          「九龙柔道」微信小程序（以下简称"本平台"）深知个人信息对您的重要性，并会尽全力保护您的个人信息安全。本隐私政策旨在向您说明我们如何收集、使用、存储和保护您的个人信息，请您在使用本平台前仔细阅读。
+          「COPADECHN 体育健身」微信小程序（以下简称"本平台"）深知个人信息对您的重要性，并会尽全力保护您的个人信息安全。本隐私政策旨在向您说明我们如何收集、使用、存储和保护您的个人信息，请您在使用本平台前仔细阅读。
         </view>
       </view>
 
@@ -21,19 +21,7 @@
         </view>
         <view class="sub-heading">2. 报名信息</view>
         <view class="para">
-          在您进行赛事报名时，我们需要收集以下信息：
-        </view>
-        <view class="para">• 姓名（汉字及拼音）：用于赛事登记和参赛证制作；</view>
-        <view class="para">• 性别、出生日期：用于确定参赛年龄组别；</view>
-        <view class="para">• 身份证号码：用于赛事实名认证和参赛资格核实；</view>
-        <view class="para">• 国籍：用于赛事登记；</view>
-        <view class="para">• 联系电话：用于赛事通知和紧急联系；</view>
-        <view class="para">• 电子邮箱：用于发送报名确认和赛事通知；</view>
-        <view class="para">• 体重信息：用于确定参赛体重级别；</view>
-        <view class="para">• 战队名称：用于赛事登记和分组。</view>
-        <view class="sub-heading">3. 支付信息</view>
-        <view class="para">
-          当您通过微信支付缴纳报名费时，支付过程由微信支付平台处理，我们仅记录订单号、支付状态和交易流水号，不会收集或存储您的银行卡号、支付密码等敏感支付信息。
+          在您进行赛事报名时，我们需要收集信息提供给赛事主办方：
         </view>
         <view class="sub-heading">4. 头像图片</view>
         <view class="para">
