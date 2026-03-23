@@ -257,7 +257,7 @@ class CompetitionController extends Controller
         $payParams = $wxPay->createJsapiOrder(
             $outTradeNo,                                          // 商户订单号（6-32位）
             (float)  $reg->amount,                               // 金额（元）
-            '九龙柔道报名 - ' . ($reg->package_label ?: '比赛报名'),  // 商品描述
+            'COPA DE CHN - ' . ($reg->package_label ?: '比赛报名'),  // 商品描述
             $user->openid                                        // 支付者 openid
         );
 
