@@ -434,10 +434,10 @@ function onIdTypeChange(e) {
 
 const genderOptions = ['男', '女']
 
-// 出生日期范围（1940-2020）
+// 出生日期范围（1940-2022）
 const birthdayRange = {
   start: '1940-01-01',
-  end: '2020-12-31',
+  end: '2022-12-31',
 }
 
 // 根据出生年份动态计算可选年龄组别
